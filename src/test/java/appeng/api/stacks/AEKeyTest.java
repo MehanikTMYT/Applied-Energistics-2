@@ -1,6 +1,9 @@
 package appeng.api.stacks;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
@@ -91,6 +94,35 @@ class AEKeyTest {
         assertEquals(expected, tag);
 
         assertEquals(key, AEKey.fromTagGeneric(TagValueInput.create(ProblemReporter.DISCARDING, registries, tag)));
+    }
+
+    /**
+     * Regression test for AE2 upstream issue #8951 (upstream fix 9b099627d). {@link AEFluidKey#hasComponents()} was
+     * {@code stack.getComponents().isEmpty()} - inverted, and evaluated against the merged prototype+patch map instead
+     * of the patch, so it returned a constant {@code false}. The contract is "true if this key has *any* components
+     * attached".
+     */
+    @Test
+    void testFluidHasComponents() {
+        assertFalse(AEFluidKey.of(Fluids.WATER).hasComponents());
+        assertFalse(AEFluidKey.of(new FluidStack(Fluids.LAVA, 1)).hasComponents());
+
+        var patched = new FluidStack(Fluids.LAVA, 1);
+        patched.set(DataComponents.MAX_STACK_SIZE, 99);
+        var patchedKey = AEFluidKey.of(patched);
+        assertTrue(patchedKey.hasComponents());
+
+        // Two otherwise identical fluid keys differing only in a component stay distinct, and only one has components.
+        assertNotEquals(AEFluidKey.of(Fluids.LAVA), patchedKey);
+        assertFalse(AEFluidKey.of(Fluids.LAVA).hasComponents());
+
+        // Survives a generic tag round trip.
+        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
+        patchedKey.toTagGeneric(output);
+        var restored = AEKey.fromTagGeneric(
+                TagValueInput.create(ProblemReporter.DISCARDING, registries, output.buildResult()));
+        assertEquals(patchedKey, restored);
+        assertTrue(restored.hasComponents());
     }
 
     private static <T> void testKeyTypeRoundtrip(AEKey key, DynamicOps<T> ops, T encodedValue) {

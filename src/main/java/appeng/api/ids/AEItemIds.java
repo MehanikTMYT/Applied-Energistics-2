@@ -39,6 +39,9 @@ public final class AEItemIds {
     public static final Identifier NETWORK_TOOL = id("network_tool");
     public static final Identifier VIEW_CELL = id("view_cell");
     public static final Identifier MEMORY_CARD = id("memory_card");
+    // Phase O ("Quantum Q4 provisioning/credential foundation")
+    public static final Identifier QUANTUM_KEY_BLANK = id("quantum_key_blank");
+    public static final Identifier QUANTUM_KEY = id("quantum_key");
 
     public static final Identifier BLANK_PATTERN = id("blank_pattern");
     public static final Identifier CRAFTING_PATTERN = id("crafting_pattern");

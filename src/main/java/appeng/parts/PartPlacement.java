@@ -19,7 +19,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.ISecurityService;
+import appeng.api.networking.security.SecurityPermissions;
 import appeng.api.parts.IPart;
+import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.PartHelper;
 import appeng.core.definitions.AEAttachmentTypes;
@@ -85,6 +89,19 @@ public class PartPlacement {
         if (host == null) {
             return null;
         }
+
+        // BUILD permission check: this host may already be attached to a live, secured network (e.g. adding
+        // another part to an existing multipart block, or extending a run of cable off an already-secured
+        // network). A brand-new, not-yet-connected host has no grid to check against yet, which correctly falls
+        // back to LEGACY-open semantics (you can always start building a network from scratch).
+        if (!level.isClientSide() && player != null) {
+            var security = findExistingGridSecurity(host);
+            if (security != null
+                    && !security.hasPermission(IActionSource.ofPlayer(player), SecurityPermissions.BUILD)) {
+                return null;
+            }
+        }
+
         var addedPart = host.addPart(partItem, side, player);
         if (addedPart == null) {
             if (host.isEmpty()) {
@@ -220,6 +237,47 @@ public class PartPlacement {
     }
 
     public record Placement(BlockPos pos, Direction side) {
+    }
+
+    /**
+     * Finds the {@link ISecurityService} of whatever live grid this host is already attached to, if any, by looking for
+     * any existing part (on any side, including the center/cable) that already has a grid node in a formed
+     * {@link appeng.api.networking.IGrid}. Returns {@code null} if the host has no parts yet, or none of its parts are
+     * currently part of a formed grid (both cases correctly fall back to LEGACY-open semantics - nothing to check
+     * permissions against).
+     */
+    @Nullable
+    static ISecurityService findExistingGridSecurity(IPartHost host) {
+        var center = host.getPart(null);
+        if (center != null) {
+            var security = securityOf(center);
+            if (security != null) {
+                return security;
+            }
+        }
+        for (var side : Direction.values()) {
+            var part = host.getPart(side);
+            if (part != null) {
+                var security = securityOf(part);
+                if (security != null) {
+                    return security;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static ISecurityService securityOf(IPart part) {
+        var node = part.getGridNode();
+        if (node == null) {
+            return null;
+        }
+        var grid = node.getGrid();
+        if (grid == null) {
+            return null;
+        }
+        return grid.getService(ISecurityService.class);
     }
 
 }

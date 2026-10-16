@@ -19,6 +19,7 @@
 package appeng.blockentity.storage;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -46,6 +48,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.IDeviceIdentity;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
@@ -66,13 +69,32 @@ import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
 import appeng.me.helpers.MachineSource;
+import appeng.me.security.DevicePrincipalRegistry;
+import appeng.me.security.MachineKey;
+import appeng.me.security.PersistentDeviceIdentity;
 import appeng.util.inv.AppEngInternalInventory;
 import appeng.util.inv.CombinedInternalInventory;
 import appeng.util.inv.FilteredInternalInventory;
 import appeng.util.inv.filter.AEItemFilters;
+import appeng.util.inv.filter.IAEItemFilter;
 
+/**
+ * Note on {@link IDeviceIdentity} (Round 25, classification <b>B - DEVICE</b>): the IO Port moves items between an
+ * inserted storage cell and the network entirely on its own {@link IGridTickable} tick. A player only ever chose the
+ * mode; the transfer itself is unattended and can run for hours after that player logged off, so the player is
+ * deliberately not the actor (brief §22) and the IO Port needs its own principal.
+ * <p/>
+ * <b>Required permission is {@code INJECT} AND {@code EXTRACT}, not one-per-mode.</b> This is the code, not an
+ * assumption: {@code transferContents} picks {@code src}/{@code destination} by {@code OperationMode}, but the
+ * partial-insert rollback ({@code src.insert(what, possible - inserted, MODULATE, mySrc)}) writes back into whichever
+ * side it just extracted from. In {@code LOAD} mode that rollback target is the <em>network</em>, so a device holding
+ * only {@code EXTRACT} would extract successfully and then be denied the rollback - the items would be gone from the
+ * network and never arrive in the cell. Granting the pair keeps the operation atomic. See
+ * {@code round25-machine-intent-boundaries.md}.
+ */
 public class IOPortBlockEntity extends AENetworkedInvBlockEntity
-        implements IUpgradeableObject, IConfigurableObject, IGridTickable {
+        implements IUpgradeableObject, IConfigurableObject, IGridTickable, IDeviceIdentity {
+    private final PersistentDeviceIdentity deviceIdentity = new PersistentDeviceIdentity();
     private static final int NUMBER_OF_CELL_SLOTS = 6;
     private static final int NUMBER_OF_UPGRADE_SLOTS = 3;
 
@@ -84,7 +106,7 @@ public class IOPortBlockEntity extends AENetworkedInvBlockEntity
             this.outputCells);
 
     private final InternalInventory inputCellsExt = new FilteredInternalInventory(this.inputCells,
-            AEItemFilters.INSERT_ONLY);
+            new StorageCellInsertOnlyFilter());
     private final InternalInventory outputCellsExt = new FilteredInternalInventory(this.outputCells,
             AEItemFilters.EXTRACT_ONLY);
 
@@ -110,9 +132,47 @@ public class IOPortBlockEntity extends AENetworkedInvBlockEntity
         this.upgrades = UpgradeInventories.forMachine(AEBlocks.IO_PORT, NUMBER_OF_UPGRADE_SLOTS, this::saveChanges);
     }
 
+    /**
+     * Round 30: identity comes from {@link DevicePrincipalRegistry}, and permanent destruction retires it.
+     * <p/>
+     * Registration happens in {@code onReady} because that is the first moment this machine has a level and a position,
+     * i.e. a {@link MachineKey}; retirement happens in {@code preRemoveSideEffects} because that is what vanilla calls
+     * when the block entity is genuinely removed - a chunk unload does not call it, so the two cases distinguish
+     * themselves. Without the retirement half, a machine built on the same spot would inherit the destroyed one's ACL.
+     */
+    @Override
+    public void onReady() {
+        super.onReady();
+
+        if (getLevel() instanceof ServerLevel serverLevel) {
+            var key = MachineKey.of(this);
+            if (key != null) {
+                var claimed = this.deviceIdentity.get();
+                var authenticated = DevicePrincipalRegistry.get(serverLevel).resolveOrRegister(key, claimed);
+                if (!authenticated.equals(claimed)) {
+                    this.deviceIdentity.adoptAuthenticatedId(authenticated);
+                    this.saveChanges();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos blockPos, BlockState blockState) {
+        super.preRemoveSideEffects(blockPos, blockState);
+
+        if (getLevel() instanceof ServerLevel serverLevel) {
+            var key = MachineKey.of(this);
+            if (key != null) {
+                DevicePrincipalRegistry.get(serverLevel).retire(key);
+            }
+        }
+    }
+
     @Override
     public void saveAdditional(ValueOutput data) {
         super.saveAdditional(data);
+        this.deviceIdentity.write(data);
         this.manager.writeToNBT(data);
         this.upgrades.writeToNBT(data, "upgrades");
         data.putInt("lastRedstoneState", this.lastRedstoneState.ordinal());
@@ -121,9 +181,19 @@ public class IOPortBlockEntity extends AENetworkedInvBlockEntity
     @Override
     public void loadTag(ValueInput data) {
         super.loadTag(data);
+        if (this.deviceIdentity.read(data)) {
+            // Pre-Round-25 IO Port (or a freshly placed one): persist the constructor-minted id right away so it stays
+            // stable across restarts and its ACL grants keep pointing at the same principal.
+            setChanged();
+        }
         this.manager.readFromNBT(data);
         this.upgrades.readFromNBT(data, "upgrades");
         this.lastRedstoneState = YesNo.values()[data.getIntOr("lastRedstoneState", YesNo.UNDECIDED.ordinal())];
+    }
+
+    @Override
+    public UUID getDeviceId() {
+        return this.deviceIdentity.get();
     }
 
     @Override
@@ -402,5 +472,17 @@ public class IOPortBlockEntity extends AENetworkedInvBlockEntity
     public void clearContent() {
         super.clearContent();
         upgrades.clear();
+    }
+
+    private static class StorageCellInsertOnlyFilter implements IAEItemFilter {
+        @Override
+        public boolean allowExtract(InternalInventory inv, int slot, int amount) {
+            return false;
+        }
+
+        @Override
+        public boolean allowInsert(InternalInventory inv, int slot, ItemStack stack) {
+            return !stack.isEmpty() && StorageCells.isCellHandled(stack);
+        }
     }
 }

@@ -60,15 +60,10 @@ dependencyResolutionManagement {
                 includeGroup 'top.theillusivec4.curios'
             }
         }
-        maven {
-            url = 'https://maven.blamejared.com/'
-            content {
-                includeGroup 'mezz.jei'
-            }
-        }
         mavenLocal() {
             content {
                 includeModule('org.appliedenergistics', 'guideme')
+                includeGroup 'dev.emi' // fleet EMI 26.1.2 build
             }
         }
         maven {

@@ -51,6 +51,7 @@ import appeng.blockentity.misc.InterfaceBlockEntity;
 import appeng.blockentity.misc.LightDetectorBlockEntity;
 import appeng.blockentity.misc.MysteriousCubeBlockEntity;
 import appeng.blockentity.misc.PaintSplotchesBlockEntity;
+import appeng.blockentity.misc.SecurityStationBlockEntity;
 import appeng.blockentity.misc.VibrationChamberBlockEntity;
 import appeng.blockentity.networking.CableBusBlockEntity;
 import appeng.blockentity.networking.ControllerBlockEntity;
@@ -86,9 +87,28 @@ public final class AEBlockEntities {
     public static final DeferredBlockEntityType<WirelessAccessPointBlockEntity> WIRELESS_ACCESS_POINT = create(
             "wireless_access_point",
             WirelessAccessPointBlockEntity.class, WirelessAccessPointBlockEntity::new, AEBlocks.WIRELESS_ACCESS_POINT);
+    public static final DeferredBlockEntityType<SecurityStationBlockEntity> SECURITY_STATION = create(
+            "security_station",
+            SecurityStationBlockEntity.class, SecurityStationBlockEntity::new, AEBlocks.SECURITY_STATION);
+    // Phase O ("Quantum Q4 provisioning/credential foundation")
+    public static final DeferredBlockEntityType<appeng.blockentity.misc.QuantumKeyImprinterBlockEntity> QUANTUM_KEY_IMPRINTER = create(
+            "quantum_key_imprinter",
+            appeng.blockentity.misc.QuantumKeyImprinterBlockEntity.class,
+            appeng.blockentity.misc.QuantumKeyImprinterBlockEntity::new, AEBlocks.QUANTUM_KEY_IMPRINTER);
     public static final DeferredBlockEntityType<ChargerBlockEntity> CHARGER = create("charger",
             ChargerBlockEntity.class,
             ChargerBlockEntity::new, AEBlocks.CHARGER);
+    // Round 10 ("Mk I PHYSICAL QUANTUM PAIR")
+    public static final DeferredBlockEntityType<appeng.blockentity.misc.QuantumEndpointBlockEntity> QUANTUM_ENDPOINT = create(
+            "quantum_endpoint",
+            appeng.blockentity.misc.QuantumEndpointBlockEntity.class,
+            appeng.blockentity.misc.QuantumEndpointBlockEntity::new, AEBlocks.QUANTUM_ENDPOINT,
+            AEBlocks.QUANTUM_ENDPOINT_MK2);
+    // Round 11 ("Routing Controller foundation")
+    public static final DeferredBlockEntityType<appeng.blockentity.misc.QuantumRoutingControllerBlockEntity> QUANTUM_ROUTING_CONTROLLER = create(
+            "quantum_routing_controller",
+            appeng.blockentity.misc.QuantumRoutingControllerBlockEntity.class,
+            appeng.blockentity.misc.QuantumRoutingControllerBlockEntity::new, AEBlocks.QUANTUM_ROUTING_CONTROLLER);
     public static final DeferredBlockEntityType<QuantumBridgeBlockEntity> QUANTUM_BRIDGE = create("quantum_ring",
             QuantumBridgeBlockEntity.class, QuantumBridgeBlockEntity::new, AEBlocks.QUANTUM_RING,
             AEBlocks.QUANTUM_LINK);
@@ -101,8 +121,12 @@ public final class AEBlockEntities {
     public static final DeferredBlockEntityType<CableBusBlockEntity> CABLE_BUS = create("cable_bus",
             CableBusBlockEntity.class,
             CableBusBlockEntity::new, AEBlocks.CABLE_BUS);
+    // Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): one shared BlockEntityType/class serves every controller
+    // CapacityTier - the tier is a property of which specific ControllerBlock instance was placed (see
+    // ControllerBlock#getCapacityTier / ControllerBlockEntity's constructor), not of the block entity type.
     public static final DeferredBlockEntityType<ControllerBlockEntity> CONTROLLER = create("controller",
-            ControllerBlockEntity.class, ControllerBlockEntity::new, AEBlocks.CONTROLLER);
+            ControllerBlockEntity.class, ControllerBlockEntity::new, AEBlocks.CONTROLLER,
+            AEBlocks.QUANTUM_CONTROLLER, AEBlocks.SINGULARITY_CONTROLLER, AEBlocks.COSMIC_CONTROLLER);
     public static final DeferredBlockEntityType<DriveBlockEntity> DRIVE = create("drive", DriveBlockEntity.class,
             DriveBlockEntity::new, AEBlocks.DRIVE);
     public static final DeferredBlockEntityType<MEChestBlockEntity> ME_CHEST = create("chest", MEChestBlockEntity.class,

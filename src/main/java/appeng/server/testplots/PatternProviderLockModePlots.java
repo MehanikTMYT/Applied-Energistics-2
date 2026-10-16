@@ -16,6 +16,7 @@ import appeng.api.config.LockCraftingMode;
 import appeng.api.config.Settings;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
+import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -299,14 +300,16 @@ public final class PatternProviderLockModePlots {
                     })
                     .thenExecuteAfter(1, () -> {
                         // Return one plank to the pattern provider (simulate)
-                        pp.getReturnInv().insert(AEItemKey.of(Items.OAK_PLANKS), 1, Actionable.SIMULATE, null);
+                        pp.getReturnInv().insert(AEItemKey.of(Items.OAK_PLANKS), 1, Actionable.SIMULATE,
+                                IActionSource.empty());
                         // Simulation should not have changed the state
                         helper.assertEquals(BlockPos.ZERO, LockCraftingMode.LOCK_UNTIL_RESULT,
                                 pp.getCraftingLockedReason());
                         helper.assertEquals(BlockPos.ZERO, TWO_PLANK.get(), pp.getUnlockStack());
 
                         // Now insert 1 for real
-                        pp.getReturnInv().insert(AEItemKey.of(Items.OAK_PLANKS), 1, Actionable.MODULATE, null);
+                        pp.getReturnInv().insert(AEItemKey.of(Items.OAK_PLANKS), 1, Actionable.MODULATE,
+                                IActionSource.empty());
 
                         // This should STILL not have reduced the expected amount, because it will happen
                         // only once the items are pushed into the network
@@ -324,7 +327,8 @@ public final class PatternProviderLockModePlots {
                     })
                     .thenExecute(() -> {
                         // Now insert another one for real
-                        pp.getReturnInv().insert(AEItemKey.of(Items.OAK_PLANKS), 1, Actionable.MODULATE, null);
+                        pp.getReturnInv().insert(AEItemKey.of(Items.OAK_PLANKS), 1, Actionable.MODULATE,
+                                IActionSource.empty());
                     })
                     .thenExecuteAfter(1, () -> {
                         // This should have unlocked the provider

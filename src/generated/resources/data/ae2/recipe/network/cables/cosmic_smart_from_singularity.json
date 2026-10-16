@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "ae2:fluix_singularity_smart_cable",
+    "ae2:fluix_singularity_smart_cable",
+    "ae2:fluix_singularity_smart_cable",
+    "ae2:fluix_singularity_smart_cable",
+    "ae2:singularity"
+  ],
+  "result": {
+    "id": "ae2:fluix_cosmic_smart_cable"
+  }
+}

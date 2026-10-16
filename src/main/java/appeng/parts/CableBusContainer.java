@@ -303,7 +303,30 @@ public class CableBusContainer implements AEMultiBlockEntity, ICableBusContainer
         updateNeighborShapeOnSide(side);
     }
 
+    /**
+     * Round 31: retire the registry identity of a part that is genuinely being removed.
+     * <p/>
+     * This is the individual-removal path - a player taking one part off a cable bus - and it is deliberately the place
+     * the retirement happens, because {@code IPart#removeFromWorld()} is also called when a chunk unloads and would
+     * therefore free identities that must survive. Retiring here frees the slot for a future part while tombstoning the
+     * identity itself, so a replacement in the same slot cannot inherit the removed device's grants.
+     */
+    private void retireDeviceIdentity(@Nullable Direction side) {
+        var part = side == null ? this.storage.getCenter() : this.getPart(side);
+        if (part == null || !(part instanceof appeng.api.networking.security.IDeviceIdentity)) {
+            return;
+        }
+        var be = this.getBlockEntity();
+        if (be != null && be.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            var key = appeng.me.security.MachineKey.of(part);
+            if (key != null) {
+                appeng.me.security.DevicePrincipalRegistry.get(serverLevel).retire(key);
+            }
+        }
+    }
+
     private void removePartWithoutUpdates(@Nullable Direction side) {
+        retireDeviceIdentity(side);
         if (side == null) {
             if (this.storage.getCenter() != null) {
                 this.storage.getCenter().removeFromWorld();

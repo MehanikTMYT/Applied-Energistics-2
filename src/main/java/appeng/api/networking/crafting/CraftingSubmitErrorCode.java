@@ -36,5 +36,10 @@ public enum CraftingSubmitErrorCode {
      * Could not obtain one of the ingredients needed for the job. {@link ICraftingSubmitResult#errorDetail()} is a
      * {@link GenericStack} explaining what is missing.
      */
-    MISSING_INGREDIENT
+    MISSING_INGREDIENT,
+    /**
+     * The action source is not allowed to request crafting on this (secured) network. See
+     * {@link appeng.api.networking.security.SecurityPermissions#CRAFT}.
+     */
+    SECURITY_DENIED
 }

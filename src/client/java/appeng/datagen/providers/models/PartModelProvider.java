@@ -4,7 +4,6 @@ import static appeng.core.AppEng.makeId;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import net.minecraft.client.color.item.Constant;
 import net.minecraft.client.data.models.BlockModelGenerators;
@@ -195,13 +194,19 @@ public class PartModelProvider extends ModelSubProvider {
     }
 
     private void registerP2PTunnels() {
-        var tunnels = Map.of(
-                AEParts.ME_P2P_TUNNEL, "part/p2p_tunnel_me",
-                AEParts.REDSTONE_P2P_TUNNEL, "part/p2p_tunnel_redstone",
-                AEParts.ITEM_P2P_TUNNEL, "part/p2p_tunnel_item",
-                AEParts.FLUID_P2P_TUNNEL, "part/p2p_tunnel_fluid",
-                AEParts.FE_P2P_TUNNEL, "part/p2p_tunnel_fe",
-                AEParts.LIGHT_P2P_TUNNEL, "part/p2p_tunnel_light");
+        var tunnels = new java.util.HashMap<ItemDefinition<?>, String>();
+        tunnels.put(AEParts.ME_P2P_TUNNEL, "part/p2p_tunnel_me");
+        // Round 9 ("HIGH-TIER ME P2P"): deliberately placeholder visuals - reuse the Standard ME P2P Tunnel's own
+        // texture/model asset, exactly like Round 8 did for tier cables/controllers (HUMAN VISUAL DESIGN PENDING),
+        // guaranteeing zero missing-texture risk.
+        tunnels.put(AEParts.QUANTUM_ME_P2P_TUNNEL, "part/p2p_tunnel_me");
+        tunnels.put(AEParts.SINGULARITY_ME_P2P_TUNNEL, "part/p2p_tunnel_me");
+        tunnels.put(AEParts.COSMIC_ME_P2P_TUNNEL, "part/p2p_tunnel_me");
+        tunnels.put(AEParts.REDSTONE_P2P_TUNNEL, "part/p2p_tunnel_redstone");
+        tunnels.put(AEParts.ITEM_P2P_TUNNEL, "part/p2p_tunnel_item");
+        tunnels.put(AEParts.FLUID_P2P_TUNNEL, "part/p2p_tunnel_fluid");
+        tunnels.put(AEParts.FE_P2P_TUNNEL, "part/p2p_tunnel_fe");
+        tunnels.put(AEParts.LIGHT_P2P_TUNNEL, "part/p2p_tunnel_light");
 
         for (var entry : tunnels.entrySet()) {
             var model = ModelTemplates.createItem("ae2:p2p_tunnel_base", TYPE).create(
@@ -227,6 +232,18 @@ public class PartModelProvider extends ModelSubProvider {
         buildCableItems(AEParts.COVERED_DENSE_CABLE, "ae2:covered_dense_cable_base", "part/cable/dense_covered/");
         buildCableItems(AEParts.SMART_CABLE, "ae2:smart_cable_base", "part/cable/smart/");
         buildCableItems(AEParts.SMART_DENSE_CABLE, "ae2:smart_dense_cable_base", "part/cable/dense_smart/");
+
+        // Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): higher CapacityTier Smart/Dense Smart cable item icons.
+        // Deliberately reuse the exact same base item model AND texture folder as their Standard-tier counterparts
+        // - capacity tier is a pathing/gameplay concept only, fully decoupled from AECableType/rendering (see the
+        // Round 8 report). This is an intentional placeholder (HUMAN VISUAL DESIGN PENDING for tier-distinct art);
+        // it guarantees no missing-texture item icons for the new items.
+        buildCableItems(AEParts.QUANTUM_SMART_CABLE, "ae2:smart_cable_base", "part/cable/smart/");
+        buildCableItems(AEParts.QUANTUM_SMART_DENSE_CABLE, "ae2:smart_dense_cable_base", "part/cable/dense_smart/");
+        buildCableItems(AEParts.SINGULARITY_SMART_CABLE, "ae2:smart_cable_base", "part/cable/smart/");
+        buildCableItems(AEParts.SINGULARITY_SMART_DENSE_CABLE, "ae2:smart_dense_cable_base", "part/cable/dense_smart/");
+        buildCableItems(AEParts.COSMIC_SMART_CABLE, "ae2:smart_cable_base", "part/cable/smart/");
+        buildCableItems(AEParts.COSMIC_SMART_DENSE_CABLE, "ae2:smart_dense_cable_base", "part/cable/dense_smart/");
     }
 
     private void buildCableItems(ColoredItemDefinition<?> cable, String baseModel, String textureBase) {

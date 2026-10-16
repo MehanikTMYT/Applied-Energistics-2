@@ -99,6 +99,28 @@ public class BlockModelProvider extends ModelSubProvider {
                 .accept(createSimpleBlock(AEBlocks.SKY_STONE_TANK, plainVariant(makeId("block/sky_stone_tank"))));
         blockStateOutput.accept(createSimpleBlock(AEBlocks.TINY_TNT, plainVariant(makeId("block/tiny_tnt"))));
 
+        // Security Station: plain textured cube, no orientation state exists on the block yet - all six faces
+        // render identically. Texture path is derived automatically from the block id (block/security_station).
+        simpleBlockAndItem(AEBlocks.SECURITY_STATION);
+
+        // Quantum Key Imprinter (Phase O - "Quantum Q4 provisioning/credential foundation"): plain textured cube,
+        // deliberately reuses the Security Station's own existing texture as a placeholder (HUMAN VISUAL DESIGN
+        // PENDING) - guarantees zero missing-texture risk, mirroring the Round 8/9 controller-tier precedent (see
+        // the controller() helper above) of reusing an identical texture set for a new, distinct block/model.
+        simpleBlockAndItem(AEBlocks.QUANTUM_KEY_IMPRINTER, "block/security_station");
+
+        // Quantum Endpoint (Round 10 - "Mk I PHYSICAL QUANTUM PAIR"): plain textured cube, placeholder texture reused
+        // from the Quantum Ring (HUMAN VISUAL DESIGN PENDING) - zero missing-texture risk, same Round 8/9/Phase O
+        // precedent as the Quantum Key Imprinter above.
+        simpleBlockAndItem(AEBlocks.QUANTUM_ENDPOINT, "block/quantum_ring");
+        // Round 12 Mk II: same placeholder visual family, distinct block/model identity. HUMAN VISUAL DESIGN PENDING.
+        simpleBlockAndItem(AEBlocks.QUANTUM_ENDPOINT_MK2, "block/quantum_ring");
+
+        // Quantum Routing Controller (Round 11 - "Routing Controller foundation"): plain textured cube, placeholder
+        // texture reused from the Security Station (HUMAN VISUAL DESIGN PENDING) - zero missing-texture risk, same
+        // Round 8/9/10/Phase O precedent as the two blocks above.
+        simpleBlockAndItem(AEBlocks.QUANTUM_ROUTING_CONTROLLER, "block/security_station");
+
         crystalResonanceGenerator();
         wirelessAccessPoint();
         craftingMonitor();
@@ -201,8 +223,19 @@ public class BlockModelProvider extends ModelSubProvider {
             BLOCK, LIGHTS);
 
     private void controller() {
-        var block = AEBlocks.CONTROLLER.block();
+        // Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): registers the Standard controller plus every higher
+        // CapacityTier controller. Each tier gets its own set of model files (named after its own block, so no
+        // filename collisions), but all of them intentionally reference the exact same "block/controller*"
+        // textures as the Standard controller - capacity tier is a pathing/gameplay concept, not a rendering one
+        // (see the Round 8 report), and this is a deliberate placeholder pending dedicated tier art (HUMAN VISUAL
+        // DESIGN PENDING). Reusing the identical texture set also guarantees no missing-texture blocks.
+        controller(AEBlocks.CONTROLLER.block());
+        controller(AEBlocks.QUANTUM_CONTROLLER.block());
+        controller(AEBlocks.SINGULARITY_CONTROLLER.block());
+        controller(AEBlocks.COSMIC_CONTROLLER.block());
+    }
 
+    private void controller(Block block) {
         var texturesBlock = new TextureMapping()
                 .put(TextureSlot.ALL, makeMaterial("block/controller"))
                 .put(TextureSlot.SIDE, makeMaterial("block/controller_column"))

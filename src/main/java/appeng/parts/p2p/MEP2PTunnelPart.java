@@ -124,6 +124,21 @@ public class MEP2PTunnelPart extends P2PTunnelPart<MEP2PTunnelPart> implements I
         return this.outerNode.getNode();
     }
 
+    /**
+     * The outer/transport node of this tunnel (see {@link #outerNode}) - the node whose native
+     * {@link appeng.api.networking.pathing.CapacityTier} sets this tunnel's transport ceiling (see
+     * {@link appeng.me.GridNode#getNativeChannelCapacity}: {@code DENSE_CAPACITY} base 32 times the tier factor).
+     * Exposed so tier subclasses (e.g. Quantum/Singularity/Cosmic ME P2P) can call
+     * {@code getOuterNode().setCapacityTier(TIER)} once in their constructor, exactly like tier cable parts call
+     * {@code getMainNode().setCapacityTier(TIER)}. The main node (see {@link #getMainNode()}) is intentionally left at
+     * its default {@code CapacityTier.STANDARD} for every tier - it is not the transport bottleneck, only the outer
+     * node is (P2P is channel transport, not channel generation; see the class-level P2P capacity invariant this
+     * mirrors for cables/controllers).
+     */
+    protected IManagedGridNode getOuterNode() {
+        return this.outerNode;
+    }
+
     @Override
     public void onPlacement(Player player) {
         super.onPlacement(player);
@@ -195,9 +210,15 @@ public class MEP2PTunnelPart extends P2PTunnelPart<MEP2PTunnelPart> implements I
                     continue;
                 }
 
+                // A null result means the connection was rejected by the fail-closed pre-merge security check
+                // (this tunnel's network and the other end's network are independently secured and bound to
+                // different domains) - don't record a connection that doesn't exist; the two networks stay
+                // separate and this output is simply left unlinked (retried again on the next update).
                 var connection = GridHelper.createConnection(getExternalFacingNode(),
                         output.getExternalFacingNode());
-                connections.put(output, connection);
+                if (connection != null) {
+                    connections.put(output, connection);
+                }
             }
         }
     }

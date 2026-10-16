@@ -35,6 +35,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridMultiblock;
 import appeng.api.networking.IGridNode;
 import appeng.blockentity.networking.ControllerBlockEntity;
+import appeng.core.AELog;
 import appeng.me.GridConnection;
 import appeng.me.GridNode;
 
@@ -183,15 +184,29 @@ public class PathingCalculation {
      * @return true if allocation was successful
      */
     private boolean tryUseChannel(GridNode start) {
-        if (start.hasFlag(GridFlags.COMPRESSED_CHANNEL) && !start.getSubtreeAllowsCompressedChannels()) {
-            // Don't send a compressed channel through this item.
+        // A COMPRESSED_CHANNEL node (an ME-P2P tunnel's own main node) is only refused a channel if ITS OWN outer
+        // transport node (CANNOT_CARRY_COMPRESSED, same owner) is already somewhere on its own path back to the
+        // controller - i.e. it is transitively carrying itself, a genuine routing loop. Other, unrelated P2P
+        // tunnels' outer nodes appearing on the same path are normal nesting and must not block this node; P2P
+        // nesting things through each other is allowed, only a tunnel depending on itself is refused.
+        if (start.hasFlag(GridFlags.COMPRESSED_CHANNEL)
+                && start.getSubtreeCompressedChannelBlockerOwners().contains(start.getOwner())) {
+            AELog.warn(
+                    "P2P ROUTING LOOP: ME-P2P tunnel %s cannot be granted a channel - its own outer transport "
+                            + "link is already on its own path to the controller (a tunnel indirectly carrying "
+                            + "itself). This tunnel stays offline; unrelated tunnels and the rest of the grid are "
+                            + "unaffected.",
+                    start);
             return false;
         }
 
-        // Check that the allocation is possible.
+        // Check that the allocation is possible. Uses getSubtreeMaxChannels() (the bottleneck-adjusted effective
+        // capacity, i.e. the minimum of getMaxChannels() along the path up to the controller), not the raw
+        // getMaxChannels(), so that a lower-tier controller (or any other upstream restriction) correctly caps an
+        // "anchor"/representative node's own higher raw capacity - see GridNode#getSubtreeMaxChannels.
         GridNode pi = start;
         while (pi != null) {
-            if (channelBottlenecks.getOrDefault(pi, 0) >= pi.getMaxChannels()) {
+            if (channelBottlenecks.getOrDefault(pi, 0) >= pi.getSubtreeMaxChannels()) {
                 return false;
             }
 

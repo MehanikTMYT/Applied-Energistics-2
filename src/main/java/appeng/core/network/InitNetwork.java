@@ -23,6 +23,7 @@ import appeng.core.network.clientbound.MockExplosionPacket;
 import appeng.core.network.clientbound.MolecularAssemblerAnimationPacket;
 import appeng.core.network.clientbound.NetworkStatusPacket;
 import appeng.core.network.clientbound.PatternAccessTerminalPacket;
+import appeng.core.network.clientbound.SecurityStationStatusPacket;
 import appeng.core.network.clientbound.SetLinkStatusPacket;
 import appeng.core.network.serverbound.ColorApplicatorSelectColorPacket;
 import appeng.core.network.serverbound.ConfigButtonPacket;
@@ -62,6 +63,11 @@ public class InitNetwork {
         registrar.playToClient(PatternAccessTerminalPacket.TYPE, PatternAccessTerminalPacket.STREAM_CODEC);
         registrar.playToClient(SetLinkStatusPacket.TYPE, SetLinkStatusPacket.STREAM_CODEC);
         registrar.playToClient(ExportedGridContent.TYPE, ExportedGridContent.STREAM_CODEC);
+        registrar.playToClient(SecurityStationStatusPacket.TYPE, SecurityStationStatusPacket.STREAM_CODEC);
+        registrar.playToClient(appeng.core.network.clientbound.QuantumKeyImprinterStatusPacket.TYPE,
+                appeng.core.network.clientbound.QuantumKeyImprinterStatusPacket.STREAM_CODEC);
+        registrar.playToClient(appeng.core.network.clientbound.QuantumRoutingControllerStatusPacket.TYPE,
+                appeng.core.network.clientbound.QuantumRoutingControllerStatusPacket.STREAM_CODEC);
 
         // Serverbound
         serverbound(registrar, ColorApplicatorSelectColorPacket.TYPE, ColorApplicatorSelectColorPacket.STREAM_CODEC);

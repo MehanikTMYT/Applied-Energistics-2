@@ -63,6 +63,7 @@ import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IGridNodeService;
 import appeng.api.networking.IGridVisitor;
 import appeng.api.networking.events.GridPowerIdleChange;
+import appeng.api.networking.pathing.CapacityTier;
 import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.parts.IPart;
 import appeng.api.stacks.AEItemKey;
@@ -127,9 +128,23 @@ public class GridNode implements IGridNode, IPathItem, IDebugExportable {
     @Nullable
     private GridNode highestSimilarAncestor = null;
     private int subtreeMaxChannels;
-    private boolean subtreeAllowsCompressedChannels;
+    /**
+     * Owners (see {@link IGridNode#getOwner()}) of every {@link GridFlags#CANNOT_CARRY_COMPRESSED} node on the path
+     * from the controller down to this node (inclusive). Used to distinguish a genuine P2P routing loop - a
+     * COMPRESSED_CHANNEL node whose own outer/transport link reappears on its own path back to the controller - from
+     * harmless coexistence of unrelated ME-P2P tunnels in the same subtree, which must not be penalized. Nesting
+     * multiple independent tunnels is normal AE2 topology; only a tunnel depending on itself is a real cycle. Empty for
+     * the overwhelming majority of nodes (shared immutable empty set), since CANNOT_CARRY_COMPRESSED ancestors only
+     * occur when a P2P tunnel's external face is itself wired into ordinary cable.
+     */
+    private Set<Object> subtreeCompressedChannelBlockerOwners = Set.of();
 
     private final EnumSet<GridFlags> flags;
+    /**
+     * The infrastructure capacity tier of this node's own native cable/controller hardware. See {@link CapacityTier} -
+     * defaults to {@link CapacityTier#STANDARD}, which reproduces every historical AE2 channel capacity number exactly.
+     */
+    private CapacityTier capacityTier = CapacityTier.STANDARD;
     private ClassToInstanceMap<IGridNodeService> services;
 
     /**
@@ -602,8 +617,28 @@ public class GridNode implements IGridNode, IPathItem, IDebugExportable {
         return highestSimilarAncestor;
     }
 
-    public boolean getSubtreeAllowsCompressedChannels() {
-        return subtreeAllowsCompressedChannels;
+    /**
+     * @return the effective (bottleneck-adjusted) channel capacity of this node's subtree, as computed by
+     *         {@link #setControllerRoute}: the minimum of {@link #getMaxChannels()} along the path from here up to (and
+     *         including) the controller. This is what {@link appeng.me.pathfinding.PathingCalculation} must check for
+     *         "anchor"/representative nodes (see {@link #getHighestSimilarAncestor()}) instead of the raw
+     *         {@link #getMaxChannels()} - the two only coincide when nothing upstream (e.g. a lower-tier
+     *         {@link appeng.api.networking.pathing.CapacityTier} controller) restricts this node below its own raw
+     *         capacity.
+     */
+    public int getSubtreeMaxChannels() {
+        return subtreeMaxChannels;
+    }
+
+    /**
+     * @return the owners of every {@code CANNOT_CARRY_COMPRESSED} node (i.e. the outer/transport node of an ME-P2P
+     *         tunnel) on this node's own path back to the controller. A {@code COMPRESSED_CHANNEL} node (a P2P tunnel's
+     *         own main node) that finds its own owner in this set is looking at its own transport link further up its
+     *         own path - a genuine routing loop - and must not be granted a channel. Any other (non-empty) content is
+     *         unrelated P2P infrastructure coexisting harmlessly and must not block anything.
+     */
+    public Set<Object> getSubtreeCompressedChannelBlockerOwners() {
+        return subtreeCompressedChannelBlockerOwners;
     }
 
     @Override
@@ -613,8 +648,17 @@ public class GridNode implements IGridNode, IPathItem, IDebugExportable {
         var nodeParent = (GridNode) fast.getControllerRoute();
         if (nodeParent.getOwner() instanceof ControllerBlockEntity) {
             this.highestSimilarAncestor = null;
-            this.subtreeMaxChannels = getMaxChannels();
-            this.subtreeAllowsCompressedChannels = !hasFlag(GridFlags.CANNOT_CARRY_COMPRESSED);
+            // The controller itself is CANNOT_CARRY (it never relays channels through itself for pathing
+            // purposes, see getMaxChannels()), but it still has real infrastructure-tier hardware that must gate
+            // the branch plugged into it - a Standard ME Controller must not let a Cosmic Dense Cable branch carry
+            // more than 32 channels just because the cable's own tier supports 256. Using the controller's native
+            // (CANNOT_CARRY-agnostic) capacity here is what makes "controller face capacity" a real constraint
+            // instead of a purely cosmetic property of the controller.
+            var channelMode = myGrid.getPathingService().getChannelMode();
+            this.subtreeMaxChannels = Math.min(nodeParent.getNativeChannelCapacity(channelMode), getMaxChannels());
+            this.subtreeCompressedChannelBlockerOwners = hasFlag(GridFlags.CANNOT_CARRY_COMPRESSED)
+                    ? Set.of(getOwner())
+                    : Set.of();
         } else {
             if (nodeParent.highestSimilarAncestor == null) {
                 // Parent is connected to a controller, it is the bottleneck.
@@ -627,8 +671,15 @@ public class GridNode implements IGridNode, IPathItem, IDebugExportable {
                 this.highestSimilarAncestor = nodeParent;
             }
             this.subtreeMaxChannels = Math.min(nodeParent.subtreeMaxChannels, getMaxChannels());
-            this.subtreeAllowsCompressedChannels = nodeParent.subtreeAllowsCompressedChannels
-                    && !hasFlag(GridFlags.CANNOT_CARRY_COMPRESSED);
+            if (!hasFlag(GridFlags.CANNOT_CARRY_COMPRESSED)) {
+                this.subtreeCompressedChannelBlockerOwners = nodeParent.subtreeCompressedChannelBlockerOwners;
+            } else if (nodeParent.subtreeCompressedChannelBlockerOwners.isEmpty()) {
+                this.subtreeCompressedChannelBlockerOwners = Set.of(getOwner());
+            } else {
+                var combined = new java.util.HashSet<>(nodeParent.subtreeCompressedChannelBlockerOwners);
+                combined.add(getOwner());
+                this.subtreeCompressedChannelBlockerOwners = combined;
+            }
         }
 
         GridConnection connection = (GridConnection) fast;
@@ -645,6 +696,18 @@ public class GridNode implements IGridNode, IPathItem, IDebugExportable {
         return this.lastUsedChannels;
     }
 
+    /**
+     * Sets the infrastructure capacity tier of this node's own native hardware. See {@link CapacityTier}.
+     */
+    public void setCapacityTier(CapacityTier tier) {
+        this.capacityTier = Objects.requireNonNull(tier, "tier");
+    }
+
+    @Override
+    public CapacityTier getCapacityTier() {
+        return this.capacityTier;
+    }
+
     @Override
     public int getMaxChannels() {
         if (flags.contains(GridFlags.CANNOT_CARRY)) {
@@ -656,11 +719,31 @@ public class GridNode implements IGridNode, IPathItem, IDebugExportable {
             return Integer.MAX_VALUE;
         }
 
-        if (!flags.contains(GridFlags.DENSE_CAPACITY)) {
-            return 8 * channelMode.getCableCapacityFactor();
-        } else {
-            return 32 * channelMode.getCableCapacityFactor();
+        return getNativeChannelCapacity(channelMode);
+    }
+
+    /**
+     * The raw channel capacity of this node's own cable/controller hardware: {@code (DENSE_CAPACITY ? 32 : 8) *
+     * capacityTier.getFactor() * channelMode.getCableCapacityFactor()}. Unlike {@link #getMaxChannels()}, this does NOT
+     * collapse to {@code 0} for {@link GridFlags#CANNOT_CARRY} nodes (e.g. controllers) - those still don't relay
+     * channels through themselves for pathing purposes, but they DO have a native infrastructure tier that must gate
+     * whatever branch is plugged into them (see {@link #setControllerRoute}, the controller special case). This is what
+     * makes "controller face capacity" a real per-tier constraint instead of a purely cosmetic property of the
+     * controller.
+     */
+    int getNativeChannelCapacity(ChannelMode channelMode) {
+        if (channelMode == ChannelMode.INFINITE) {
+            return Integer.MAX_VALUE;
         }
+        int base;
+        if (flags.contains(GridFlags.DENSE_CAPACITY)) {
+            base = 32;
+        } else if (flags.contains(GridFlags.REDUCED_CAPACITY)) {
+            base = 4;
+        } else {
+            base = 8;
+        }
+        return base * capacityTier.getFactor() * channelMode.getCableCapacityFactor();
     }
 
     @Override

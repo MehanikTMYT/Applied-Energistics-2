@@ -65,6 +65,7 @@ public class CraftErrorScreen extends AESubScreen<CraftConfirmMenu, CraftConfirm
 
                 yield GuiText.CraftErrorMissingIngredient.text();
             }
+            case SECURITY_DENIED -> GuiText.CraftErrorSecurityDenied.text();
         };
 
         setTextContent("errorText", errorText);

@@ -1,0 +1,89 @@
+{
+  "$schema": "schema.json",
+  "includes": ["common/common.json"],
+  "background": {
+    "texture": "guis/networkstatus.png",
+    "srcRect": [0, 0, 195, 157]
+  },
+  "text": {
+    "dialog_title": {
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    }
+  },
+  "widgets": {
+    "scrollbar": {
+      "left": 178,
+      "top": 38,
+      "height": 63
+    },
+    "mode_button": {
+      "left": 8,
+      "top": 111,
+      "width": 38,
+      "height": 14
+    },
+    "name_field": {
+      "left": 48,
+      "top": 111,
+      "width": 70,
+      "height": 14
+    },
+    "perm_inject": {
+      "left": 120,
+      "top": 111,
+      "width": 12,
+      "height": 14
+    },
+    "perm_extract": {
+      "left": 132,
+      "top": 111,
+      "width": 12,
+      "height": 14
+    },
+    "perm_craft": {
+      "left": 144,
+      "top": 111,
+      "width": 12,
+      "height": 14
+    },
+    "perm_build": {
+      "left": 156,
+      "top": 111,
+      "width": 12,
+      "height": 14
+    },
+    "perm_security": {
+      "left": 168,
+      "top": 111,
+      "width": 12,
+      "height": 14
+    },
+    "grant_button": {
+      "left": 8,
+      "top": 127,
+      "width": 40,
+      "height": 14
+    },
+    "revoke_button": {
+      "left": 50,
+      "top": 127,
+      "width": 40,
+      "height": 14
+    },
+    "new_group_button": {
+      "left": 92,
+      "top": 127,
+      "width": 55,
+      "height": 14
+    },
+    "activate_button": {
+      "left": 38,
+      "top": 60,
+      "width": 118,
+      "height": 20
+    }
+  }
+}

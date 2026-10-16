@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_quantum_endpoint": {
+      "conditions": {
+        "items": [
+          {
+            "items": "ae2:quantum_endpoint"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "ae2:network/blocks/quantum_endpoint_mk2"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_quantum_endpoint"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "ae2:network/blocks/quantum_endpoint_mk2"
+    ]
+  }
+}

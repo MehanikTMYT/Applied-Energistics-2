@@ -38,13 +38,7 @@ config="ae2.mixins.json"
 [[dependencies.ae2]]
     modId="emi"
     type="OPTIONAL"
-    ordering="AFTER"
-    side="BOTH"
-
-[[dependencies.ae2]]
-    modId="jei"
-    type="OPTIONAL"
-    versionRange="[${jei_version},)"
+    versionRange="[1.1.24,)"
     ordering="AFTER"
     side="BOTH"
 

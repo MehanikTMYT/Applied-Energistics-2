@@ -19,6 +19,7 @@
 package appeng.parts.automation;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.IDeviceIdentity;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
@@ -54,10 +56,26 @@ import appeng.core.AEConfig;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
 import appeng.me.helpers.MachineSource;
+import appeng.me.security.DevicePrincipalRegistry;
+import appeng.me.security.MachineKey;
+import appeng.me.security.PersistentDeviceIdentity;
 import appeng.parts.AEBasePart;
 import appeng.util.SettingsFrom;
 
-public class AnnihilationPlanePart extends AEBasePart implements IGridTickable {
+/**
+ * Note on {@link IDeviceIdentity} (Round 25, classification <b>B - DEVICE</b>): the plane breaks blocks and absorbs
+ * entities on its own tick / on collision and then calls {@code insertIntoGrid}, i.e. {@code MEStorage#insert} on the
+ * network's secured storage. That injection is a new, unattended, security-sensitive intent, so the plane is its own
+ * principal.
+ * <p/>
+ * <b>Required permission is {@code INJECT} only.</b> Deliberately <em>not</em> {@code BUILD}: this project's hard
+ * invariant is that {@code BUILD} is an AE2 network construction/configuration permission and never a world claim /
+ * anti-grief permission (brief §8.6). Whether the plane may break a given block in the world is a world protection
+ * question that AE2's ACL does not and must not answer; all that is classified here is what happens to the drops once
+ * they are already in the plane's hands, and that is a plain network {@code INJECT}.
+ */
+public class AnnihilationPlanePart extends AEBasePart implements IGridTickable, IDeviceIdentity {
+    private final PersistentDeviceIdentity deviceIdentity = new PersistentDeviceIdentity();
 
     private static final Logger LOG = LoggerFactory.getLogger(AnnihilationPlanePart.class);
 
@@ -87,6 +105,7 @@ public class AnnihilationPlanePart extends AEBasePart implements IGridTickable {
     @Override
     public void addToWorld() {
         super.addToWorld();
+        registerDeviceIdentity();
 
         var host = getBlockEntity();
         var buildHeight = host.getLevel().getMaxY();
@@ -106,13 +125,22 @@ public class AnnihilationPlanePart extends AEBasePart implements IGridTickable {
     @Override
     public void readFromNBT(ValueInput input) {
         super.readFromNBT(input);
+        if (this.deviceIdentity.read(input)) {
+            getHost().markForSave();
+        }
         this.enchantments = input.read("enchantments", ItemEnchantments.CODEC).orElse(ItemEnchantments.EMPTY);
     }
 
     @Override
     public void writeToNBT(ValueOutput output) {
         super.writeToNBT(output);
+        this.deviceIdentity.write(output);
         output.store("enchantments", ItemEnchantments.CODEC, this.enchantments);
+    }
+
+    @Override
+    public UUID getDeviceId() {
+        return this.deviceIdentity.get();
     }
 
     @Override
@@ -330,4 +358,30 @@ public class AnnihilationPlanePart extends AEBasePart implements IGridTickable {
             long amount,
             int ticks) {
     }
+
+    /**
+     * Round 31: this part takes its identity from {@link DevicePrincipalRegistry} rather than from its own NBT.
+     * <p/>
+     * {@code addToWorld} is the part-side counterpart of a block entity's {@code onReady}: the first moment the part
+     * has a host, a position and a side, i.e. a resolvable {@link MachineKey}. Retirement is deliberately <em>not</em>
+     * done here or in {@code removeFromWorld}, because that method is called both when the cable bus is destroyed and
+     * when its chunk merely unloads (see {@code CableBusBlockEntity#setRemoved} / {@code #onChunkUnloaded}); using it
+     * would free an identity on every unload. The two genuine removal signals live in the host instead:
+     * {@code CableBusContainer#removePartFromSide} for a single part and
+     * {@code CableBusBlockEntity#preRemoveSideEffects} for the whole block.
+     */
+    private void registerDeviceIdentity() {
+        if (getBlockEntity() != null && getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
+            var key = MachineKey.of(this);
+            if (key != null) {
+                var claimed = this.deviceIdentity.get();
+                var authenticated = DevicePrincipalRegistry.get(serverLevel).resolveOrRegister(key, claimed);
+                if (!authenticated.equals(claimed)) {
+                    this.deviceIdentity.adoptAuthenticatedId(authenticated);
+                    this.getHost().markForSave();
+                }
+            }
+        }
+    }
+
 }

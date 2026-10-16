@@ -60,10 +60,22 @@ public final class AEBlockIds {
     ///
     public static final Identifier INSCRIBER = id("inscriber");
     public static final Identifier WIRELESS_ACCESS_POINT = id("wireless_access_point");
+    public static final Identifier SECURITY_STATION = id("security_station");
+    // Phase O ("Quantum Q4 provisioning/credential foundation")
+    public static final Identifier QUANTUM_KEY_IMPRINTER = id("quantum_key_imprinter");
+    // Round 10 ("Mk I PHYSICAL QUANTUM PAIR")
+    public static final Identifier QUANTUM_ENDPOINT = id("quantum_endpoint");
+    public static final Identifier QUANTUM_ENDPOINT_MK2 = id("quantum_endpoint_mk2");
+    // Round 11 ("Routing Controller foundation")
+    public static final Identifier QUANTUM_ROUTING_CONTROLLER = id("quantum_routing_controller");
     public static final Identifier CHARGER = id("charger");
     public static final Identifier QUANTUM_RING = id("quantum_ring");
     public static final Identifier QUANTUM_LINK = id("quantum_link");
     public static final Identifier CONTROLLER = id("controller");
+    // Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE")
+    public static final Identifier QUANTUM_CONTROLLER = id("quantum_controller");
+    public static final Identifier SINGULARITY_CONTROLLER = id("singularity_controller");
+    public static final Identifier COSMIC_CONTROLLER = id("cosmic_controller");
     public static final Identifier DRIVE = id("drive");
     public static final Identifier ME_CHEST = id("me_chest");
     public static final Identifier INTERFACE = id("interface");

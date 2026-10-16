@@ -62,6 +62,8 @@ import appeng.api.networking.crafting.UnsuitableCpus;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.events.GridCraftingCpuChange;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.ISecurityService;
+import appeng.api.networking.security.SecurityPermissions;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -361,6 +363,10 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             boolean prioritizePower, IActionSource src) {
         if (job.simulation()) {
             return CraftingSubmitResult.INCOMPLETE_PLAN;
+        }
+
+        if (!this.grid.getService(ISecurityService.class).hasPermission(src, SecurityPermissions.CRAFT)) {
+            return CraftingSubmitResult.SECURITY_DENIED;
         }
 
         CraftingCPUCluster cpuCluster;

@@ -43,6 +43,9 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.pathing.ChannelMode;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.ISecurityService;
+import appeng.api.networking.security.SecurityPermissions;
 import appeng.api.parts.BusSupport;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartItem;
@@ -202,6 +205,17 @@ public abstract class CablePart extends AEBasePart implements ICablePart {
                     return true;
                 }
 
+                // BUILD permission check: a cable's color determines which adjacent cables it will physically
+                // connect to (see InWorldGridNode#hasCompatibleColor) - recoloring an already-placed cable is
+                // therefore a modification of the network's physical layout, the same class of operation
+                // PartPlacement#placePart and CableBusBlockEntity#disassembleWithWrench already gate. Historical
+                // precedent: the pre-2023 AE2 security system gated this exact operation the same way (see
+                // CablePart#changeColor prior to commit b682a5c6, "Fix #7116: Remove security system"). A host with
+                // no grid yet has nothing to check against (falls back to LEGACY-open, matching the other hooks).
+                if (!hasBuildPermissionToRecolor(getMainNode(), who)) {
+                    return false;
+                }
+
                 setPartItem(newPart);
 
                 getMainNode().setGridColor(getCableColor());
@@ -212,6 +226,28 @@ public abstract class CablePart extends AEBasePart implements ICablePart {
             }
         }
         return false;
+    }
+
+    /**
+     * Routing logic for the BUILD permission check in {@link #changeColor}, factored out so it can be unit-tested
+     * without a full in-world part/host/level setup (mirrors {@code PartPlacement#findExistingGridSecurity}'s own
+     * reasoning for why it is a separate, directly-testable static method).
+     *
+     * @return {@code true} if recoloring is allowed: either there is no player attached to the action, the node has no
+     *         grid yet to check against (nothing to conflict with - matches every other BUILD hook's "brand-new,
+     *         not-yet-connected host" fallback), or the player holds {@link SecurityPermissions#BUILD} on whatever grid
+     *         the node currently belongs to.
+     */
+    static boolean hasBuildPermissionToRecolor(IManagedGridNode mainNode, @Nullable Player who) {
+        if (who == null) {
+            return true;
+        }
+        var grid = mainNode.getGrid();
+        if (grid == null) {
+            return true;
+        }
+        var security = grid.getService(ISecurityService.class);
+        return security.hasPermission(IActionSource.ofPlayer(who), SecurityPermissions.BUILD);
     }
 
     @Override

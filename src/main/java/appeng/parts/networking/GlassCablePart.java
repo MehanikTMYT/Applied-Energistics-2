@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Direction;
 
+import appeng.api.networking.GridFlags;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.util.AECableType;
 import appeng.items.parts.ColoredPartItem;
@@ -31,6 +32,11 @@ import appeng.items.parts.ColoredPartItem;
 public class GlassCablePart extends CablePart {
     public GlassCablePart(ColoredPartItem<?> partItem) {
         super(partItem);
+        // Glass Cable is intentionally the lowest-capacity cable tier (4 channels at CapacityTier.STANDARD, its
+        // only tier). GridFlags.PREFERRED must be re-specified here because IManagedGridNode#setFlags replaces the
+        // whole flag set rather than adding to it (see CablePart's own constructor, which sets PREFERRED) - losing
+        // it would silently demote Glass Cable to the lowest pathing preference queue, same as a bare device.
+        this.getMainNode().setFlags(GridFlags.PREFERRED, GridFlags.REDUCED_CAPACITY);
     }
 
     @Override

@@ -297,6 +297,16 @@ public final class AEComponents {
             "missing_content_aekey_data",
             builder -> builder.persistent(CustomData.CODEC).networkSynchronized(CustomData.STREAM_CODEC));
 
+    /**
+     * The provisioning credential data an encoded Quantum Key card carries — see
+     * {@link appeng.api.implementations.items.QuantumKeyCardData}'s own javadoc for why this is deliberately minimal
+     * and never the source of truth.
+     */
+    public static final DataComponentType<appeng.api.implementations.items.QuantumKeyCardData> QUANTUM_KEY_CARD_DATA = register(
+            "quantum_key_card_data",
+            builder -> builder.persistent(appeng.api.implementations.items.QuantumKeyCardData.CODEC)
+                    .networkSynchronized(appeng.api.implementations.items.QuantumKeyCardData.STREAM_CODEC));
+
     public static final DataComponentType<String> MISSING_CONTENT_ERROR = register("missing_content_error",
             builder -> builder.persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8));
 

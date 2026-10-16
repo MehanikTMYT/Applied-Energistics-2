@@ -21,12 +21,14 @@ package appeng.blockentity.crafting;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -37,6 +39,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.networking.IGridNodeListener;
+import appeng.api.networking.security.IDeviceIdentity;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.util.AECableType;
@@ -46,10 +49,24 @@ import appeng.blockentity.grid.AENetworkedBlockEntity;
 import appeng.core.definitions.AEBlocks;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
+import appeng.me.security.DevicePrincipalRegistry;
+import appeng.me.security.MachineKey;
+import appeng.me.security.PersistentDeviceIdentity;
 import appeng.util.SettingsFrom;
 
-public class PatternProviderBlockEntity extends AENetworkedBlockEntity implements PatternProviderLogicHost {
+/**
+ * Note on {@link IDeviceIdentity}: a Pattern Provider returns items to the network on its own initiative
+ * ({@code PatternProviderLogic#doWork} -> {@code PatternProviderReturnInventory#injectIntoNetwork}), and the items it
+ * returns can have been pushed into its return inventory by any adjacent machine. That is a genuine machine-initiated
+ * {@code INJECT} into network storage, not an internal continuation of an already-authorized crafting job, so on a
+ * {@code SECURED} network it must be attributable to a specific, stable principal rather than falling back to
+ * {@code EVERYONE}. See Round 24's design gate and {@link PersistentDeviceIdentity}.
+ */
+public class PatternProviderBlockEntity extends AENetworkedBlockEntity
+        implements PatternProviderLogicHost, IDeviceIdentity {
     protected final PatternProviderLogic logic = createLogic();
+
+    private final PersistentDeviceIdentity deviceIdentity = new PersistentDeviceIdentity();
 
     public PatternProviderBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState blockState) {
         super(blockEntityType, pos, blockState);
@@ -95,19 +112,65 @@ public class PatternProviderBlockEntity extends AENetworkedBlockEntity implement
     @Override
     public void onReady() {
         super.onReady();
+        registerDeviceIdentity();
         this.logic.updatePatterns();
+    }
+
+    /**
+     * Round 30: identity comes from {@link DevicePrincipalRegistry}, and permanent destruction retires it.
+     * <p/>
+     * Registration happens in {@code onReady} because that is the first moment this machine has a level and a position,
+     * i.e. a {@link MachineKey}; retirement happens in {@code preRemoveSideEffects} because that is what vanilla calls
+     * when the block entity is genuinely removed - a chunk unload does not call it, so the two cases distinguish
+     * themselves. Without the retirement half, a machine built on the same spot would inherit the destroyed one's ACL.
+     */
+    private void registerDeviceIdentity() {
+        if (getLevel() instanceof ServerLevel serverLevel) {
+            var key = MachineKey.of(this);
+            if (key != null) {
+                var claimed = this.deviceIdentity.get();
+                var authenticated = DevicePrincipalRegistry.get(serverLevel).resolveOrRegister(key, claimed);
+                if (!authenticated.equals(claimed)) {
+                    this.deviceIdentity.adoptAuthenticatedId(authenticated);
+                    this.saveChanges();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos blockPos, BlockState blockState) {
+        super.preRemoveSideEffects(blockPos, blockState);
+
+        if (getLevel() instanceof ServerLevel serverLevel) {
+            var key = MachineKey.of(this);
+            if (key != null) {
+                DevicePrincipalRegistry.get(serverLevel).retire(key);
+            }
+        }
     }
 
     @Override
     public void saveAdditional(ValueOutput data) {
         super.saveAdditional(data);
+        this.deviceIdentity.write(data);
         this.logic.writeToNBT(data);
     }
 
     @Override
     public void loadTag(ValueInput data) {
         super.loadTag(data);
+        if (this.deviceIdentity.read(data)) {
+            // Placed before device identities existed (or freshly placed): keep the id minted in the constructor and
+            // persist it now, so this provider keeps the same Device principal across every future load.
+            setChanged();
+        }
         this.logic.readFromNBT(data);
+    }
+
+    @Override
+    public UUID getDeviceId() {
+        return this.deviceIdentity.get();
     }
 
     @Override

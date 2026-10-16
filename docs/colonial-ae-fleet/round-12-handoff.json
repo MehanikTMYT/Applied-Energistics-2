@@ -1,0 +1,53 @@
+{
+  "round": 12,
+  "status": "PROVEN_WITH_LIMITATIONS",
+  "last_updated": "2026-08-19T12:08:00+03:00",
+  "branch": "main",
+  "head": "45f315517ea346efc0babd02c85c6b9d32dc8acf",
+  "baseline": { "junit_cases": 837, "gametest": 79, "build": "PASS" },
+  "current": { "junit_cases": 852, "junit_passed": 851, "junit_skipped": 1, "gametest": 85, "build": "PASS" },
+  "aggregator": {
+    "pre_review_job": "2cb2734e-a39e-479e-9ca1-90109ceeb6ec",
+    "post_review_job": "0a4884a8-2d02-46d1-a1e2-ebe54265f6c9",
+    "chatgpt_free": "CONTAMINATED_EXCLUDED"
+  },
+  "architecture": {
+    "hub_policy_model": "incremental explicit-anchor template over exact Q3 edges",
+    "exact_edges_authority": true,
+    "automatic_failover": false,
+    "router_authors_topology": false,
+    "mk2_capacity_tier": "QUANTUM"
+  },
+  "completed_phases": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"],
+  "current_phase": "COMPLETE",
+  "files_changed_round12": [
+    "src/main/java/appeng/me/quantum/QuantumCredentialService.java",
+    "src/main/java/appeng/block/misc/QuantumEndpointBlock.java",
+    "src/main/java/appeng/blockentity/misc/QuantumEndpointBlockEntity.java",
+    "src/main/java/appeng/me/quantum/QuantumRoutingService.java",
+    "src/main/java/appeng/blockentity/misc/QuantumRoutingControllerBlockEntity.java",
+    "src/main/java/appeng/core/network/clientbound/QuantumRoutingControllerStatusPacket.java",
+    "src/main/java/appeng/menu/implementations/QuantumRoutingControllerMenu.java",
+    "src/client/java/appeng/client/gui/implementations/QuantumRoutingControllerScreen.java",
+    "src/main/java/appeng/api/ids/AEBlockIds.java",
+    "src/main/java/appeng/core/definitions/AEBlocks.java",
+    "src/main/java/appeng/core/definitions/AEBlockEntities.java",
+    "src/client/java/appeng/datagen/providers/models/BlockModelProvider.java",
+    "src/client/java/appeng/datagen/providers/recipes/CraftingRecipes.java",
+    "src/generated/resources/assets/ae2/lang/en_us.json",
+    "src/main/resources/assets/ae2/lang/ru_ru.json",
+    "six generated quantum_endpoint_mk2 JSON resources"
+  ],
+  "tests_added_round12": [
+    "QuantumHubRound12Test (9 tests)",
+    "QuantumHubChannelCapacityTest (5 tests)",
+    "QuantumTopologyRegistryPersistenceTest explicit HUB star restart test",
+    "routing_controller_multiple_same_profile GameTest",
+    "five quantum_hub_* GameTests"
+  ],
+  "known_flakes": ["fe_charger timeout 1/2 runs; retry passed; Round 12 tests passed both"],
+  "blockers": [],
+  "limitations": ["interactive client world not verified", "human visual design pending", "Gradle server stdin did not forward stop"],
+  "next_actions": ["owner may review Round 12 artifacts", "separate approval required before any Round 13 MESH design"],
+  "git": { "staged": 0, "committed": false, "pushed": false, "expected_final_dirty_entries": 670 }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "schema.json",
+  "includes": ["common/common.json"],
+  "background": {
+    "texture": "guis/networkstatus.png",
+    "srcRect": [0, 0, 195, 157]
+  },
+  "text": {
+    "dialog_title": {
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    }
+  },
+  "widgets": {
+    "issue_button": {
+      "left": 8,
+      "top": 78,
+      "width": 85,
+      "height": 14
+    },
+    "revoke_button": {
+      "left": 8,
+      "top": 96,
+      "width": 85,
+      "height": 14
+    },
+    "suspend_button": {
+      "left": 101,
+      "top": 78,
+      "width": 85,
+      "height": 14
+    },
+    "resume_button": {
+      "left": 101,
+      "top": 96,
+      "width": 85,
+      "height": 14
+    }
+  }
+}

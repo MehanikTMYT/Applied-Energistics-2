@@ -289,6 +289,74 @@ public class CraftingRecipes extends AE2RecipeProvider {
                 .define('d', ConventionTags.CHEST)
                 .unlockedBy("has_calculation_processor", has(AEItems.CALCULATION_PROCESSOR))
                 .save(output, makeId("network/blocks/cell_workbench"));
+        shaped(RecipeCategory.MISC, AEBlocks.SECURITY_STATION)
+                .pattern("aba")
+                .pattern("cdc")
+                .pattern("aea")
+                .define('a', ConventionTags.IRON_INGOT)
+                .define('b', ConventionTags.CHEST)
+                .define('c', AEParts.GLASS_CABLE.item(AEColor.TRANSPARENT))
+                .define('d', AEItems.CELL_COMPONENT_16K)
+                .define('e', AEItems.ENGINEERING_PROCESSOR)
+                .unlockedBy("has_engineering_processor", has(AEItems.ENGINEERING_PROCESSOR))
+                .unlockedBy("has_16k_storage_component", has(AEItems.CELL_COMPONENT_16K))
+                .save(output, makeId("network/blocks/security_station"));
+
+        // Phase O ("Quantum Q4 provisioning/credential foundation") - FUNCTIONAL BASELINE / BALANCE TBD. Uses only
+        // existing AE2 high-end vocabulary (Fluix, Engineering Processor, Quantum Ring, Singularity) - no new
+        // materials/ores, per the Q4 task's own constraint.
+        shapeless(RecipeCategory.MISC, AEItems.QUANTUM_KEY_BLANK, 4)
+                .requires(AEItems.FLUIX_CRYSTAL)
+                .requires(ConventionTags.GOLD_INGOT)
+                .unlockedBy("has_fluix_crystal", has(AEItems.FLUIX_CRYSTAL))
+                .save(output, makeId("network/tools/quantum_key_blank"));
+        shaped(RecipeCategory.MISC, AEBlocks.QUANTUM_KEY_IMPRINTER)
+                .pattern("epe")
+                .pattern("frf")
+                .pattern("epe")
+                .define('e', AEItems.ENGINEERING_PROCESSOR)
+                .define('p', AEItems.SINGULARITY)
+                .define('f', AEItems.FLUIX_CRYSTAL)
+                .define('r', AEBlocks.QUANTUM_RING)
+                .unlockedBy("has_singularity", has(AEItems.SINGULARITY))
+                .unlockedBy("has_quantum_ring", has(AEBlocks.QUANTUM_RING))
+                .save(output, makeId("network/blocks/quantum_key_imprinter"));
+
+        // Round 10 ("Mk I PHYSICAL QUANTUM PAIR") - FUNCTIONAL BASELINE / BALANCE TBD, same constraint as Phase O
+        // above: only existing AE2 high-end vocabulary, no new materials/ores.
+        shaped(RecipeCategory.MISC, AEBlocks.QUANTUM_ENDPOINT)
+                .pattern("fef")
+                .pattern("epe")
+                .pattern("fef")
+                .define('e', AEItems.ENGINEERING_PROCESSOR)
+                .define('p', AEItems.SINGULARITY)
+                .define('f', AEItems.FLUIX_CRYSTAL)
+                .unlockedBy("has_singularity", has(AEItems.SINGULARITY))
+                .unlockedBy("has_engineering_processor", has(AEItems.ENGINEERING_PROCESSOR))
+                .save(output, makeId("network/blocks/quantum_endpoint"));
+        shaped(RecipeCategory.MISC, AEBlocks.QUANTUM_ENDPOINT_MK2)
+                .pattern("fef")
+                .pattern("eqe")
+                .pattern("fef")
+                .define('e', AEItems.ENGINEERING_PROCESSOR)
+                .define('q', AEBlocks.QUANTUM_ENDPOINT)
+                .define('f', AEItems.FLUIX_CRYSTAL)
+                .unlockedBy("has_quantum_endpoint", has(AEBlocks.QUANTUM_ENDPOINT))
+                .save(output, makeId("network/blocks/quantum_endpoint_mk2"));
+
+        // Round 11 ("Routing Controller foundation") - FUNCTIONAL BASELINE / BALANCE TBD, same constraint as Round 10
+        // and Phase O above: only existing AE2 high-end vocabulary, no new materials/ores. A control-plane device, so
+        // it is deliberately cheaper than the Quantum Endpoint it administers - it carries no transport capability.
+        shaped(RecipeCategory.MISC, AEBlocks.QUANTUM_ROUTING_CONTROLLER)
+                .pattern("fef")
+                .pattern("ere")
+                .pattern("fef")
+                .define('e', AEItems.ENGINEERING_PROCESSOR)
+                .define('f', AEItems.FLUIX_CRYSTAL)
+                .define('r', AEBlocks.QUANTUM_RING)
+                .unlockedBy("has_engineering_processor", has(AEItems.ENGINEERING_PROCESSOR))
+                .unlockedBy("has_quantum_ring", has(AEBlocks.QUANTUM_RING))
+                .save(output, makeId("network/blocks/quantum_routing_controller"));
         shaped(RecipeCategory.MISC, AEBlocks.CONTROLLER)
                 .pattern("aba")
                 .pattern("bcb")
@@ -519,6 +587,7 @@ public class CraftingRecipes extends AE2RecipeProvider {
                 .save(output, makeId("network/blocks/storage_drive"));
 
         addCables();
+        addHighCapacityInfrastructure();
 
         // ====================================================
         // recipes/network/cells
@@ -1477,6 +1546,137 @@ public class CraftingRecipes extends AE2RecipeProvider {
                 .requires(ConventionTags.CAN_REMOVE_COLOR)
                 .unlockedBy("has_smart_cable", has(ConventionTags.SMART_CABLE))
                 .save(output, makeId("network/cables/smart_fluix_clean"));
+    }
+
+    /**
+     * Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): Standard -> Quantum -> Singularity -> Cosmic progression recipes for
+     * the new tiered Smart/Dense Smart cables and ME Controllers, using existing AE2 crafting vocabulary (Fluix
+     * Crystal, Engineering Processor, the Quantum Ring block already used for the Quantum Network Bridge multiblock,
+     * and the plain Singularity material item) as tier-up ingredients - no new materials/ores are introduced.
+     * FUNCTIONAL BASELINE / BALANCE TBD: costs are intentionally simple (mirroring the existing "4 of the previous tier
+     * -> 1 of the next" Smart-to-Dense-Smart pattern above) and not final-game-balanced.
+     */
+    private void addHighCapacityInfrastructure() {
+        // ---- Controllers: previous controller tier is a direct ingredient of the next ----
+        shapeless(RecipeCategory.MISC, AEBlocks.QUANTUM_CONTROLLER)
+                .requires(AEBlocks.CONTROLLER)
+                .requires(AEItems.ENGINEERING_PROCESSOR)
+                .requires(AEBlocks.QUANTUM_RING)
+                .requires(AEBlocks.QUANTUM_RING)
+                .unlockedBy("has_controller", has(AEBlocks.CONTROLLER))
+                .unlockedBy("has_engineering_processor", has(AEItems.ENGINEERING_PROCESSOR))
+                .save(output, makeId("network/blocks/quantum_controller"));
+        shapeless(RecipeCategory.MISC, AEBlocks.SINGULARITY_CONTROLLER)
+                .requires(AEBlocks.QUANTUM_CONTROLLER)
+                .requires(AEItems.ENGINEERING_PROCESSOR)
+                .requires(AEItems.SINGULARITY)
+                .unlockedBy("has_quantum_controller", has(AEBlocks.QUANTUM_CONTROLLER))
+                .unlockedBy("has_singularity", has(AEItems.SINGULARITY))
+                .save(output, makeId("network/blocks/singularity_controller"));
+        shapeless(RecipeCategory.MISC, AEBlocks.COSMIC_CONTROLLER)
+                .requires(AEBlocks.SINGULARITY_CONTROLLER)
+                .requires(AEItems.SINGULARITY)
+                .requires(AEItems.SINGULARITY)
+                .requires(AEItems.SINGULARITY)
+                .requires(AEItems.SINGULARITY)
+                .unlockedBy("has_singularity_controller", has(AEBlocks.SINGULARITY_CONTROLLER))
+                .unlockedBy("has_singularity", has(AEItems.SINGULARITY))
+                .save(output, makeId("network/blocks/cosmic_controller"));
+
+        // ---- Smart Cable tier-up chain (transparent/uncolored base, matches the existing Smart->Dense pattern
+        // of "4 of the previous item -> 1 of the next", plus one themed tier-up ingredient) ----
+        shapeless(RecipeCategory.MISC, AEParts.QUANTUM_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEItems.FLUIX_CRYSTAL)
+                .unlockedBy("has_fluix_smart_cable", has(AEParts.SMART_CABLE.item(AEColor.TRANSPARENT)))
+                .save(output, makeId("network/cables/quantum_smart_from_smart"));
+        shapeless(RecipeCategory.MISC, AEParts.SINGULARITY_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.QUANTUM_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.QUANTUM_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.QUANTUM_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.QUANTUM_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEItems.ENGINEERING_PROCESSOR)
+                .unlockedBy("has_quantum_smart_cable", has(AEParts.QUANTUM_SMART_CABLE.item(AEColor.TRANSPARENT)))
+                .save(output, makeId("network/cables/singularity_smart_from_quantum"));
+        shapeless(RecipeCategory.MISC, AEParts.COSMIC_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SINGULARITY_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SINGULARITY_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SINGULARITY_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEParts.SINGULARITY_SMART_CABLE.item(AEColor.TRANSPARENT))
+                .requires(AEItems.SINGULARITY)
+                .unlockedBy("has_singularity_smart_cable",
+                        has(AEParts.SINGULARITY_SMART_CABLE.item(AEColor.TRANSPARENT)))
+                .save(output, makeId("network/cables/cosmic_smart_from_singularity"));
+
+        // ---- Dense Smart Cable tier-up chain, plus "4 smart -> 1 dense smart" at each tier (mirrors the
+        // existing Standard-tier pattern exactly) ----
+        addTierDenseCableRecipes(AEParts.QUANTUM_SMART_CABLE, AEParts.QUANTUM_SMART_DENSE_CABLE, "quantum");
+        addTierDenseCableRecipes(AEParts.SINGULARITY_SMART_CABLE, AEParts.SINGULARITY_SMART_DENSE_CABLE,
+                "singularity");
+        addTierDenseCableRecipes(AEParts.COSMIC_SMART_CABLE, AEParts.COSMIC_SMART_DENSE_CABLE, "cosmic");
+
+        // ---- Per-color dye recipes for all 6 new items, mirroring the existing Standard-tier color recipes ----
+        addColorRecipes(AEParts.QUANTUM_SMART_CABLE, "quantum_smart");
+        addColorRecipes(AEParts.QUANTUM_SMART_DENSE_CABLE, "quantum_dense_smart");
+        addColorRecipes(AEParts.SINGULARITY_SMART_CABLE, "singularity_smart");
+        addColorRecipes(AEParts.SINGULARITY_SMART_DENSE_CABLE, "singularity_dense_smart");
+        addColorRecipes(AEParts.COSMIC_SMART_CABLE, "cosmic_smart");
+        addColorRecipes(AEParts.COSMIC_SMART_DENSE_CABLE, "cosmic_dense_smart");
+
+        // ---- Round 9 ("HIGH-TIER ME P2P"): ME P2P Tunnel tier-up chain, same vocabulary/progression pattern as the
+        // controllers above (previous tunnel tier is a direct ingredient of the next). FUNCTIONAL BASELINE / BALANCE
+        // TBD. ----
+        shapeless(RecipeCategory.MISC, AEParts.QUANTUM_ME_P2P_TUNNEL)
+                .requires(AEParts.ME_P2P_TUNNEL)
+                .requires(AEItems.ENGINEERING_PROCESSOR)
+                .requires(AEBlocks.QUANTUM_RING)
+                .unlockedBy("has_me_p2p_tunnel", has(AEParts.ME_P2P_TUNNEL))
+                .unlockedBy("has_engineering_processor", has(AEItems.ENGINEERING_PROCESSOR))
+                .save(output, makeId("network/parts/quantum_me_p2p_tunnel"));
+        shapeless(RecipeCategory.MISC, AEParts.SINGULARITY_ME_P2P_TUNNEL)
+                .requires(AEParts.QUANTUM_ME_P2P_TUNNEL)
+                .requires(AEItems.ENGINEERING_PROCESSOR)
+                .requires(AEItems.SINGULARITY)
+                .unlockedBy("has_quantum_me_p2p_tunnel", has(AEParts.QUANTUM_ME_P2P_TUNNEL))
+                .unlockedBy("has_singularity", has(AEItems.SINGULARITY))
+                .save(output, makeId("network/parts/singularity_me_p2p_tunnel"));
+        shapeless(RecipeCategory.MISC, AEParts.COSMIC_ME_P2P_TUNNEL)
+                .requires(AEParts.SINGULARITY_ME_P2P_TUNNEL)
+                .requires(AEItems.SINGULARITY)
+                .requires(AEItems.SINGULARITY)
+                .unlockedBy("has_singularity_me_p2p_tunnel", has(AEParts.SINGULARITY_ME_P2P_TUNNEL))
+                .unlockedBy("has_singularity", has(AEItems.SINGULARITY))
+                .save(output, makeId("network/parts/cosmic_me_p2p_tunnel"));
+    }
+
+    private void addTierDenseCableRecipes(
+            appeng.core.definitions.ColoredItemDefinition<?> smart,
+            appeng.core.definitions.ColoredItemDefinition<?> denseSmart,
+            String idPrefix) {
+        shapeless(RecipeCategory.MISC, denseSmart.item(AEColor.TRANSPARENT))
+                .requires(smart.item(AEColor.TRANSPARENT))
+                .requires(smart.item(AEColor.TRANSPARENT))
+                .requires(smart.item(AEColor.TRANSPARENT))
+                .requires(smart.item(AEColor.TRANSPARENT))
+                .unlockedBy("has_" + idPrefix + "_smart_cable", has(smart.item(AEColor.TRANSPARENT)))
+                .save(output, makeId("network/cables/" + idPrefix + "_dense_smart_from_smart"));
+    }
+
+    private void addColorRecipes(appeng.core.definitions.ColoredItemDefinition<?> cable, String idPrefix) {
+        for (var color : AEColor.VALID_COLORS) {
+            shaped(RecipeCategory.MISC, cable.item(color), 8)
+                    .pattern("aaa")
+                    .pattern("aba")
+                    .pattern("aaa")
+                    .define('a', cable.item(AEColor.TRANSPARENT))
+                    .define('b', ConventionTags.dye(color.dye))
+                    .unlockedBy("has_dyes/black", has(ConventionTags.dye(color.dye)))
+                    .unlockedBy("has_" + idPrefix + "_cable", has(cable.item(AEColor.TRANSPARENT)))
+                    .save(output, makeId("network/cables/" + idPrefix + "_" + color.registryPrefix));
+        }
     }
 
     private void addPaintBalls(RecipeOutput output) {

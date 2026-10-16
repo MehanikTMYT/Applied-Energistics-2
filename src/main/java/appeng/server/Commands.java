@@ -26,6 +26,8 @@ import appeng.server.services.compass.TestCompassCommand;
 import appeng.server.subcommands.ChannelModeCommand;
 import appeng.server.subcommands.ChunkLogger;
 import appeng.server.subcommands.GridsCommand;
+import appeng.server.subcommands.SecurityGroupCommand;
+import appeng.server.subcommands.SecurityRecoverCommand;
 import appeng.server.subcommands.SetupTestWorldCommand;
 import appeng.server.subcommands.SpatialStorageCommand;
 import appeng.server.subcommands.TestMeteoritesCommand;
@@ -38,6 +40,11 @@ public enum Commands {
     CHANNEL_MODE(net.minecraft.commands.Commands.LEVEL_OWNERS, "channelmode", new ChannelModeCommand()),
     TICK_MONITORING(net.minecraft.commands.Commands.LEVEL_OWNERS, "tickmonitor", new TickMonitoring()),
     GRIDS(net.minecraft.commands.Commands.LEVEL_OWNERS, "grids", new GridsCommand()),
+    SECURITY(net.minecraft.commands.Commands.LEVEL_OWNERS, "security", new SecurityRecoverCommand()),
+    // Deliberately LEVEL_ALL (not nested under "security", which is operator-only for its "recover" anti-lockout
+    // tool): group membership management is gated by the in-game SECURITY ACL permission, checked inside the
+    // command itself - see SecurityGroupCommand's own doc comment for why it cannot share the "security" node.
+    SECURITY_GROUP(net.minecraft.commands.Commands.LEVEL_ALL, "securitygroup", new SecurityGroupCommand()),
 
     // Testing
     COMPASS(net.minecraft.commands.Commands.LEVEL_OWNERS, "compass", new TestCompassCommand(), true),

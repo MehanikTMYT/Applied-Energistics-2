@@ -58,6 +58,18 @@ public enum GridFlags {
     DENSE_CAPACITY,
 
     /**
+     * This node transmits at reduced capacity (4 channels at
+     * {@link appeng.api.networking.pathing.CapacityTier#STANDARD} instead of the ordinary non-dense 8), currently used
+     * only by Glass Cable. Mutually exclusive with {@link #DENSE_CAPACITY} in practice (no cable is both reduced- and
+     * dense-capacity); if both are ever set, {@link #DENSE_CAPACITY} takes precedence in the base-capacity lookup.
+     * Glass Cable intentionally has no {@link appeng.api.networking.pathing.CapacityTier} variants beyond
+     * {@code STANDARD} - this flag alone defines its (lower) capacity ceiling, the same
+     * {@link appeng.api.networking.pathing.CapacityTier} multiplier still applies on top of it for uniformity, but no
+     * higher-tier Glass Cable part is ever constructed.
+     */
+    REDUCED_CAPACITY,
+
+    /**
      * This block is part of a multiblock, used in conjunction with REQUIRE_CHANNEL, and {@link IGridMultiblock} see
      * this interface for details.
      */

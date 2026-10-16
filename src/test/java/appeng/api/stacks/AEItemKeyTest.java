@@ -17,7 +17,11 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemStack;
@@ -26,6 +30,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 
 import appeng.api.config.FuzzyMode;
@@ -205,8 +210,107 @@ class AEItemKeyTest {
     }
 
     /**
+     * Regression test for AE2 upstream issue #8951 (fixed upstream by 9b099627d): {@link AEKey#hasComponents()} was
+     * implemented as {@code stack.getComponents().isEmpty()}, which is inverted <em>and</em> asks the wrong question:
+     * {@link ItemStack#getComponents()} returns the merged prototype+patch map, which is practically never empty, so
+     * the method effectively returned a constant {@code false} for every item key. The contract is "true if this key
+     * has *any* (non-default) components attached", i.e. a non-empty component patch.
+     */
+    @Test
+    void testHasComponents() {
+        // A key without any component patch
+        assertFalse(AEItemKey.of(Items.DIAMOND_PICKAXE).hasComponents());
+        assertFalse(AEItemKey.of(new ItemStack(Items.DIAMOND_PICKAXE)).hasComponents());
+        assertFalse(AEItemKey.of(Blocks.BEDROCK).hasComponents());
+
+        // Explicitly writing a value that is equal to the item's default must not count as "has components",
+        // because ItemStack collapses such a set back out of the patch.
+        var undamagedPick = new ItemStack(Items.DIAMOND_PICKAXE);
+        undamagedPick.setDamageValue(0);
+        assertFalse(AEItemKey.of(undamagedPick).hasComponents());
+
+        // A key with exactly one component patched
+        var namedStack = new ItemStack(Items.DIAMOND_PICKAXE);
+        namedStack.set(DataComponents.CUSTOM_NAME, Component.literal("variant"));
+        assertTrue(AEItemKey.of(namedStack).hasComponents());
+
+        // Removing it again returns to the component-less state
+        namedStack.remove(DataComponents.CUSTOM_NAME);
+        assertFalse(AEItemKey.of(namedStack).hasComponents());
+    }
+
+    /**
+     * Two otherwise identical keys that differ only in a data component must remain distinguishable, and only the one
+     * carrying the component may report {@link AEKey#hasComponents()}.
+     */
+    @Test
+    void testHasComponentsDistinguishesOtherwiseIdenticalKeys() {
+        var plain = new ItemStack(Items.DIAMOND_PICKAXE);
+        var patched = new ItemStack(Items.DIAMOND_PICKAXE);
+        patched.set(DataComponents.CUSTOM_NAME, Component.literal("variant"));
+
+        var plainKey = AEItemKey.of(plain);
+        var patchedKey = AEItemKey.of(patched);
+
+        assertNotEquals(plainKey, patchedKey);
+        assertFalse(plainKey.hasComponents());
+        assertTrue(patchedKey.hasComponents());
+
+        // Damage is a component too, and a damaged tool is a distinct key that has components.
+        var damaged = new ItemStack(Items.DIAMOND_PICKAXE);
+        damaged.setDamageValue(5);
+        var damagedKey = AEItemKey.of(damaged);
+        assertNotEquals(plainKey, damagedKey);
+        assertTrue(damagedKey.hasComponents());
+    }
+
+    /**
+     * hasComponents() must survive a serialization round trip, since AE keys are constantly rebuilt from tags/packets.
+     */
+    @Test
+    void testHasComponentsSurvivesRoundtrip() {
+        var patchedStack = new ItemStack(Items.DIAMOND_PICKAXE);
+        patchedStack.set(DataComponents.MAX_STACK_SIZE, 99);
+
+        var original = AEItemKey.of(patchedStack);
+        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
+        original.toTagGeneric(output);
+        var restored = AEKey.fromTagGeneric(
+                TagValueInput.create(ProblemReporter.DISCARDING, registries, output.buildResult()));
+        assertNotNull(restored);
+        assertEquals(original, restored);
+        assertTrue(restored.hasComponents());
+
+        var plain = AEItemKey.of(Items.DIAMOND_PICKAXE);
+        var plainOutput = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
+        plain.toTagGeneric(plainOutput);
+        var plainRestored = AEKey.fromTagGeneric(
+                TagValueInput.create(ProblemReporter.DISCARDING, registries, plainOutput.buildResult()));
+        assertNotNull(plainRestored);
+        assertEquals(plain, plainRestored);
+        assertFalse(plainRestored.hasComponents());
+    }
+
+    @Test
+    void testHasComponents() {
+        assertFalse(AEItemKey.of(Items.DIAMOND_PICKAXE).hasComponents());
+        assertFalse(AEItemKey.of(new ItemStack(Items.DIAMOND_PICKAXE)).hasComponents());
+
+        var undamagedPick = new ItemStack(Items.DIAMOND_PICKAXE);
+        assertFalse(AEItemKey.of(undamagedPick).hasComponents());
+
+        var namedStack = new ItemStack(Items.DIAMOND_PICKAXE);
+        namedStack.set(DataComponents.CUSTOM_NAME, Component.literal("variant"));
+        assertTrue(AEItemKey.of(namedStack).hasComponents());
+
+        namedStack.remove(DataComponents.CUSTOM_NAME);
+        assertFalse(AEItemKey.of(namedStack).hasComponents());
+    }
+
+    /**
      * Regression test for {@link FuzzySearch#COMPARATOR} wrongly using AEKey identity comparison as a last resort.
      */
+
     @Test
     void testDifferentInstances(MinecraftServer server) {
         int testCount = 100;
@@ -237,4 +341,5 @@ class AEItemKeyTest {
 
         }
     }
+
 }

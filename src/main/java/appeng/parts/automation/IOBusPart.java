@@ -19,9 +19,11 @@
 package appeng.parts.automation;
 
 import java.util.Set;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
@@ -36,6 +38,7 @@ import appeng.api.config.Settings;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.IDeviceIdentity;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
@@ -49,6 +52,9 @@ import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
 import appeng.helpers.IConfigInvHost;
 import appeng.me.helpers.MachineSource;
+import appeng.me.security.DevicePrincipalRegistry;
+import appeng.me.security.MachineKey;
+import appeng.me.security.PersistentDeviceIdentity;
 import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;
@@ -56,7 +62,26 @@ import appeng.util.ConfigInventory;
 import appeng.util.Platform;
 import appeng.util.prioritylist.IPartitionList;
 
-public abstract class IOBusPart extends UpgradeablePart implements IGridTickable, IConfigInvHost, ISubMenuHost {
+/**
+ * Note on {@link IDeviceIdentity} (Round 25, classification <b>B - DEVICE</b>): an I/O bus is an <em>autonomous</em>
+ * actor. Nothing but its own {@link IGridTickable} tick drives {@code doBusWork}; the player who configured its filter
+ * is long gone and is deliberately not the actor (brief §22: a player's own {@code EXTRACT} must not silently open an
+ * Export Bus). The bus therefore creates a genuinely new, security-sensitive intent every tick and needs a principal of
+ * its own.
+ * <p/>
+ * The identity lives on <em>this</em> object - the part instance - not on the {@code CableBus} host (brief §16), so two
+ * buses on the same cable are two different {@code Device} principals. That falls out of the field being an instance
+ * field and of {@code source} being {@code new MachineSource(this)}: {@code SecurityService#resolveDeviceId} finds this
+ * part directly on its first branch, without ever consulting the host.
+ * <p/>
+ * Required permissions differ per subclass and are deliberately <em>not</em> unified here (brief §19): an
+ * {@link ImportBusPart} only ever calls {@code MEStorage#insert} on the network ({@code INJECT}), an
+ * {@link ExportBusPart} only ever calls {@code MEStorage#extract} ({@code EXTRACT}), plus {@code CRAFT} when a Crafting
+ * Card is installed. Neither ever needs {@code BUILD}, {@code SECURITY} or any {@code QUANTUM_*} permission.
+ */
+public abstract class IOBusPart extends UpgradeablePart
+        implements IGridTickable, IConfigInvHost, ISubMenuHost, IDeviceIdentity {
+    private final PersistentDeviceIdentity deviceIdentity = new PersistentDeviceIdentity();
     private final ConfigInventory config;
     // Filter derived from the config
     @Nullable
@@ -118,6 +143,11 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     @Override
     public void readFromNBT(ValueInput extra) {
         super.readFromNBT(extra);
+        if (this.deviceIdentity.read(extra)) {
+            // Pre-Round-25 bus (or a freshly placed one): keep the id minted in the constructor and persist it now so
+            // it is stable from here on, instead of drifting on every reload and invalidating its ACL grants.
+            getHost().markForSave();
+        }
         config.readFromChildTag(extra, "config");
         // Ensure the filter is rebuilt
         filter = null;
@@ -127,10 +157,16 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     @Override
     public void writeToNBT(ValueOutput extra) {
         super.writeToNBT(extra);
+        this.deviceIdentity.write(extra);
         config.writeToChildTag(extra, "config");
         if (isInPulseMode() && pendingPulse) {
             extra.putBoolean("pendingPulse", true);
         }
+    }
+
+    @Override
+    public UUID getDeviceId() {
+        return this.deviceIdentity.get();
     }
 
     @Override
@@ -287,6 +323,7 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     @Override
     public void addToWorld() {
         super.addToWorld();
+        registerDeviceIdentity();
 
         // To correctly detect pulses (changes from low to high), we need to know the current state when we
         // are added to the world.
@@ -307,4 +344,30 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     public ItemStack getMainMenuIcon() {
         return getPartItem().asItem().getDefaultInstance();
     }
+
+    /**
+     * Round 31: this part takes its identity from {@link DevicePrincipalRegistry} rather than from its own NBT.
+     * <p/>
+     * {@code addToWorld} is the part-side counterpart of a block entity's {@code onReady}: the first moment the part
+     * has a host, a position and a side, i.e. a resolvable {@link MachineKey}. Retirement is deliberately <em>not</em>
+     * done here or in {@code removeFromWorld}, because that method is called both when the cable bus is destroyed and
+     * when its chunk merely unloads (see {@code CableBusBlockEntity#setRemoved} / {@code #onChunkUnloaded}); using it
+     * would free an identity on every unload. The two genuine removal signals live in the host instead:
+     * {@code CableBusContainer#removePartFromSide} for a single part and
+     * {@code CableBusBlockEntity#preRemoveSideEffects} for the whole block.
+     */
+    private void registerDeviceIdentity() {
+        if (getBlockEntity() != null && getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
+            var key = MachineKey.of(this);
+            if (key != null) {
+                var claimed = this.deviceIdentity.get();
+                var authenticated = DevicePrincipalRegistry.get(serverLevel).resolveOrRegister(key, claimed);
+                if (!authenticated.equals(claimed)) {
+                    this.deviceIdentity.adoptAuthenticatedId(authenticated);
+                    this.getHost().markForSave();
+                }
+            }
+        }
+    }
+
 }

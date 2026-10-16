@@ -48,6 +48,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridServiceProvider;
+import appeng.api.networking.security.ISecurityService;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.storage.IStorageWatcherNode;
 import appeng.api.stacks.AEKey;
@@ -57,6 +58,7 @@ import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.MEStorage;
 import appeng.me.helpers.InterestManager;
 import appeng.me.helpers.StackWatcher;
+import appeng.me.security.SecurityAwareMEStorage;
 import appeng.me.storage.NetworkStorage;
 import appeng.util.JsonStreamUtil;
 
@@ -76,6 +78,11 @@ public class StorageService implements IStorageService, IGridServiceProvider {
             this.interests);
     private final NetworkStorage storage;
     /**
+     * The publicly exposed inventory, wrapping {@link #storage} with the network's {@link ISecurityService} check for
+     * {@code INJECT}/{@code EXTRACT}. See {@link SecurityAwareMEStorage}.
+     */
+    private final MEStorage securedStorage;
+    /**
      * Publicly exposed cached available stacks.
      */
     private final KeyCounter cachedAvailableStacks = new KeyCounter();
@@ -93,8 +100,9 @@ public class StorageService implements IStorageService, IGridServiceProvider {
 
     private final StatsAccumulator inventoryRefreshStats = new StatsAccumulator();
 
-    public StorageService() {
+    public StorageService(ISecurityService security) {
         this.storage = new NetworkStorage();
+        this.securedStorage = new SecurityAwareMEStorage(storage, security);
     }
 
     @Override
@@ -195,7 +203,7 @@ public class StorageService implements IStorageService, IGridServiceProvider {
 
     @Override
     public MEStorage getInventory() {
-        return storage;
+        return securedStorage;
     }
 
     @Override

@@ -45,6 +45,7 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IGridNodeService;
 import appeng.api.networking.IManagedGridNode;
+import appeng.api.networking.pathing.CapacityTier;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.util.AEColor;
 import appeng.core.AELog;
@@ -65,6 +66,7 @@ public class ManagedGridNode implements IManagedGridNode {
         private Set<Direction> exposedOnSides = EnumSet.allOf(Direction.class);
         private AEItemKey visualRepresentation = null;
         private EnumSet<GridFlags> flags = EnumSet.noneOf(GridFlags.class);
+        private CapacityTier capacityTier = CapacityTier.STANDARD;
         private double idlePowerUsage = 1.0;
         private int owner = -1; // ME player id of owner
         private Level level;
@@ -89,6 +91,7 @@ public class ManagedGridNode implements IManagedGridNode {
             node.setGridColor(gridColor);
             node.setOwningPlayerId(owner);
             node.setIdlePowerUsage(idlePowerUsage);
+            node.setCapacityTier(capacityTier);
             node.setVisualRepresentation(visualRepresentation);
             if (services != null) {
                 for (var serviceClass : services.keySet()) {
@@ -259,6 +262,17 @@ public class ManagedGridNode implements IManagedGridNode {
         var flagSet = EnumSet.noneOf(GridFlags.class);
         Collections.addAll(flagSet, flags);
         getInitData().flags = flagSet;
+        return this;
+    }
+
+    @Override
+    public ManagedGridNode setCapacityTier(CapacityTier tier) {
+        Objects.requireNonNull(tier, "tier");
+        if (node == null) {
+            getInitData().capacityTier = tier;
+        } else {
+            node.setCapacityTier(tier);
+        }
         return this;
     }
 

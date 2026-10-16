@@ -39,6 +39,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.common.util.ValueIOSerializable;
 
+import appeng.api.networking.pathing.CapacityTier;
 import appeng.api.networking.pathing.IPathingService;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.util.AEColor;
@@ -122,6 +123,14 @@ public interface IManagedGridNode extends ValueIOSerializable {
     }
 
     IManagedGridNode setFlags(GridFlags... flags);
+
+    /**
+     * Sets the infrastructure capacity tier of this node's native cable/controller hardware. Defaults to
+     * {@link CapacityTier#STANDARD}, which reproduces AE2's historical channel capacities exactly. Higher tiers only
+     * raise the ceiling this node's own hardware can carry - they never grant channels by themselves, and a connection
+     * to a lower-tier neighbor is still bottlenecked by that neighbor.
+     */
+    IManagedGridNode setCapacityTier(CapacityTier tier);
 
     /**
      * Changes the sides of the node's host this node is exposed on.

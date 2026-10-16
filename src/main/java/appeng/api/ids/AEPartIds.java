@@ -265,6 +265,11 @@ public final class AEPartIds {
     /// P2P
     ///
     public static final Identifier ME_P2P_TUNNEL = id("me_p2p_tunnel");
+    // Round 9 ("HIGH-TIER ME P2P"): higher CapacityTier ME P2P tunnels. Same MEP2PTunnelPart mechanism (see
+    // appeng.parts.p2p.QuantumMEP2PTunnelPart et al.), only the outer/transport node's channel ceiling differs.
+    public static final Identifier QUANTUM_ME_P2P_TUNNEL = id("quantum_me_p2p_tunnel");
+    public static final Identifier SINGULARITY_ME_P2P_TUNNEL = id("singularity_me_p2p_tunnel");
+    public static final Identifier COSMIC_ME_P2P_TUNNEL = id("cosmic_me_p2p_tunnel");
     public static final Identifier REDSTONE_P2P_TUNNEL = id("redstone_p2p_tunnel");
     public static final Identifier ITEM_P2P_TUNNEL = id("item_p2p_tunnel");
     public static final Identifier FLUID_P2P_TUNNEL = id("fluid_p2p_tunnel");

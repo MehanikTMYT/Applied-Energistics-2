@@ -86,6 +86,11 @@ public class ItemModelProvider extends ModelSubProvider {
         storageCell(AEItems.FLUID_CELL_64K, "item/fluid_storage_cell_64k");
         storageCell(AEItems.FLUID_CELL_256K, "item/fluid_storage_cell_256k");
         flatSingleLayer(AEItems.FLUID_CELL_HOUSING, "item/fluid_cell_housing");
+        // Phase O ("Quantum Q4 provisioning/credential foundation") - deliberately reuses existing item textures as
+        // placeholders (HUMAN VISUAL DESIGN PENDING), guaranteeing zero missing-texture risk, mirroring the
+        // Round 8/9 controller-tier precedent of reusing an identical texture set for a new, distinct model.
+        flatSingleLayer(AEItems.QUANTUM_KEY_BLANK, "item/logic_processor");
+        flatSingleLayer(AEItems.QUANTUM_KEY, "item/singularity");
         flatSingleLayer(AEItems.FLUIX_CRYSTAL, "item/fluix_crystal");
         flatSingleLayer(AEItems.FLUIX_DUST, "item/fluix_dust");
         flatSingleLayer(AEItems.FLUIX_PEARL, "item/fluix_pearl");

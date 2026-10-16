@@ -52,6 +52,7 @@ import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import appeng.api.ids.AEBlockIds;
+import appeng.api.networking.pathing.CapacityTier;
 import appeng.block.AEBaseBlock;
 import appeng.block.AEBaseBlockItem;
 import appeng.block.crafting.CraftingBlockItem;
@@ -70,6 +71,7 @@ import appeng.block.misc.InterfaceBlock;
 import appeng.block.misc.LightDetectorBlock;
 import appeng.block.misc.MysteriousCubeBlock;
 import appeng.block.misc.QuartzFixtureBlock;
+import appeng.block.misc.SecurityStationBlock;
 import appeng.block.misc.TinyTNTBlock;
 import appeng.block.misc.VibrationChamberBlock;
 import appeng.block.networking.CableBusBlock;
@@ -161,7 +163,15 @@ public final class AEBlocks {
 
     public static final BlockDefinition<InscriberBlock> INSCRIBER = block("Inscriber", AEBlockIds.INSCRIBER, p -> new InscriberBlock(metalProps(p).noOcclusion().lightLevel(_ -> 2)));
     public static final BlockDefinition<WirelessAccessPointBlock> WIRELESS_ACCESS_POINT = block("ME Wireless Access Point", AEBlockIds.WIRELESS_ACCESS_POINT, WirelessAccessPointBlock::new);
+    public static final BlockDefinition<SecurityStationBlock> SECURITY_STATION = block("Security Station", AEBlockIds.SECURITY_STATION, SecurityStationBlock::new);
+    // Phase O ("Quantum Q4 provisioning/credential foundation")
+    public static final BlockDefinition<appeng.block.misc.QuantumKeyImprinterBlock> QUANTUM_KEY_IMPRINTER = block("Quantum Key Imprinter", AEBlockIds.QUANTUM_KEY_IMPRINTER, appeng.block.misc.QuantumKeyImprinterBlock::new);
     public static final BlockDefinition<ChargerBlock> CHARGER = block("Charger", AEBlockIds.CHARGER, p -> new ChargerBlock(p.lightLevel(_ -> 2)));
+    // Round 10 ("Mk I PHYSICAL QUANTUM PAIR")
+    public static final BlockDefinition<appeng.block.misc.QuantumEndpointBlock> QUANTUM_ENDPOINT = block("Quantum Endpoint", AEBlockIds.QUANTUM_ENDPOINT, appeng.block.misc.QuantumEndpointBlock::new);
+    public static final BlockDefinition<appeng.block.misc.QuantumEndpointBlock> QUANTUM_ENDPOINT_MK2 = block("Quantum Endpoint Mk II", AEBlockIds.QUANTUM_ENDPOINT_MK2, p -> new appeng.block.misc.QuantumEndpointBlock(p, CapacityTier.QUANTUM));
+    // Round 11 ("Routing Controller foundation") - control plane only; never required for an existing PAIR to work.
+    public static final BlockDefinition<appeng.block.misc.QuantumRoutingControllerBlock> QUANTUM_ROUTING_CONTROLLER = block("Quantum Routing Controller", AEBlockIds.QUANTUM_ROUTING_CONTROLLER, appeng.block.misc.QuantumRoutingControllerBlock::new);
 
     public static final BlockDefinition<TinyTNTBlock> TINY_TNT = block("Tiny TNT", AEBlockIds.TINY_TNT, p -> new TinyTNTBlock(defaultProps(p, MapColor.FIRE, SoundType.GRAVEL).strength(0).noOcclusion().lightLevel(_ -> 2)));
 
@@ -170,6 +180,15 @@ public final class AEBlocks {
     public static final BlockDefinition<SpatialPylonBlock> SPATIAL_PYLON = block("Spatial Pylon", AEBlockIds.SPATIAL_PYLON, SpatialPylonBlock::new);
     public static final BlockDefinition<SpatialIOPortBlock> SPATIAL_IO_PORT = block("Spatial IO Port", AEBlockIds.SPATIAL_IO_PORT, SpatialIOPortBlock::new);
     public static final BlockDefinition<ControllerBlock> CONTROLLER = block("ME Controller", AEBlockIds.CONTROLLER, ControllerBlock::new);
+    // Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): higher CapacityTier controllers. Share the exact same
+    // ControllerBlock/ControllerBlockEntity Java classes and (see AEBlockEntities.CONTROLLER) the same
+    // BlockEntityType as the Standard controller - only the CapacityTier constructor argument differs. A
+    // controller multiblock must be tier-homogeneous (see appeng.me.pathfinding.ControllerValidator); mixing
+    // these with AEBlocks.CONTROLLER (or with each other) in one physical structure fails safe as
+    // ControllerState.CONTROLLER_CONFLICT.
+    public static final BlockDefinition<ControllerBlock> QUANTUM_CONTROLLER = block("ME Quantum Controller", AEBlockIds.QUANTUM_CONTROLLER, p -> new ControllerBlock(p, CapacityTier.QUANTUM));
+    public static final BlockDefinition<ControllerBlock> SINGULARITY_CONTROLLER = block("ME Singularity Controller", AEBlockIds.SINGULARITY_CONTROLLER, p -> new ControllerBlock(p, CapacityTier.SINGULARITY));
+    public static final BlockDefinition<ControllerBlock> COSMIC_CONTROLLER = block("ME Cosmic Controller", AEBlockIds.COSMIC_CONTROLLER, p -> new ControllerBlock(p, CapacityTier.COSMIC));
     public static final BlockDefinition<DriveBlock> DRIVE = block("ME Drive", AEBlockIds.DRIVE, DriveBlock::new);
     public static final BlockDefinition<MEChestBlock> ME_CHEST = block("ME Chest", AEBlockIds.ME_CHEST, MEChestBlock::new);
     public static final BlockDefinition<InterfaceBlock> INTERFACE = block("ME Interface", AEBlockIds.INTERFACE, InterfaceBlock::new);

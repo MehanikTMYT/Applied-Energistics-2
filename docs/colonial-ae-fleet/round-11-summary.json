@@ -1,0 +1,27 @@
+{
+  "date": "2026-08-19",
+  "round": 11,
+  "verdict": "PROVEN_WITH_LIMITATIONS",
+  "scope": "PAIR-only Routing Controller status and existing-intent repair",
+  "repository": "/root/home/forks/ae-stack/core/Applied-Energistics-2",
+  "branch": "main",
+  "head": "45f315517ea346efc0babd02c85c6b9d32dc8acf",
+  "minecraft": "26.1.2",
+  "neoforge": "26.1.2.21-beta",
+  "validation": {
+    "junit": { "passed": 837, "failed": 0 },
+    "gametest": { "passed": 79, "failed": 0 },
+    "build": "PASS",
+    "diff_check": "PASS",
+    "qnb_changed": false
+  },
+  "aggregator": {
+    "pre_review_job": "76871e7d-3a25-4814-ad18-fa3180d67559",
+    "pre_review_chatgpt_retry_job": "0ddab3db-d555-43f8-ac71-f69d0c3950d6",
+    "post_review_job": "cc7844c7-45c8-4ee3-a6ca-20af051bb7ba",
+    "providers": ["qwen", "gemini", "chatgpt-free"],
+    "chatgpt_artifact_issue": "stale Round-10 conversation content despite completed run"
+  },
+  "hardening": "Removed Routing Controller create/delete intent mutation surfaces; retained existing-intent repair only",
+  "deferred": ["HUB", "MESH", "automatic failover", "Mk II-IV", "relocation", "final power balance", "global topology browser"]
+}

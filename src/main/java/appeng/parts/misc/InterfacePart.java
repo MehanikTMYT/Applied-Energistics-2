@@ -19,10 +19,12 @@
 package appeng.parts.misc;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.ValueInput;
@@ -34,16 +36,34 @@ import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IManagedGridNode;
+import appeng.api.networking.security.IDeviceIdentity;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartItem;
 import appeng.api.util.AECableType;
 import appeng.api.util.IConfigManager;
 import appeng.helpers.InterfaceLogic;
 import appeng.helpers.InterfaceLogicHost;
+import appeng.me.security.DevicePrincipalRegistry;
+import appeng.me.security.MachineKey;
+import appeng.me.security.PersistentDeviceIdentity;
 import appeng.menu.locator.MenuLocators;
 import appeng.parts.AEBasePart;
 
-public class InterfacePart extends AEBasePart implements InterfaceLogicHost {
+/**
+ * Note on {@link IDeviceIdentity}: see {@code InterfaceBlockEntity}'s class comment for the full MIXED actor model. The
+ * identity belongs to this <em>part</em>, not to its {@code CableBus} host (brief §16), so two Interface parts on one
+ * cable are two different {@code Device} principals, and an Interface part is never the same principal as an Interface
+ * block.
+ */
+public class InterfacePart extends AEBasePart implements InterfaceLogicHost, IDeviceIdentity {
+
+    private final PersistentDeviceIdentity deviceIdentity = new PersistentDeviceIdentity();
+
+    @Override
+    public void addToWorld() {
+        super.addToWorld();
+        registerDeviceIdentity();
+    }
 
     private static final IGridNodeListener<InterfacePart> NODE_LISTENER = new NodeListener<>() {
         @Override
@@ -90,12 +110,16 @@ public class InterfacePart extends AEBasePart implements InterfaceLogicHost {
     @Override
     public void readFromNBT(ValueInput input) {
         super.readFromNBT(input);
+        if (this.deviceIdentity.read(input)) {
+            saveChanges();
+        }
         this.logic.readFromNBT(input);
     }
 
     @Override
     public void writeToNBT(ValueOutput data) {
         super.writeToNBT(data);
+        this.deviceIdentity.write(data);
         this.logic.writeToNBT(data);
     }
 
@@ -157,4 +181,35 @@ public class InterfacePart extends AEBasePart implements InterfaceLogicHost {
     public ItemStack getMainMenuIcon() {
         return new ItemStack(getPartItem());
     }
+
+    @Override
+    public UUID getDeviceId() {
+        return this.deviceIdentity.get();
+    }
+
+    /**
+     * Round 31: this part takes its identity from {@link DevicePrincipalRegistry} rather than from its own NBT.
+     * <p/>
+     * {@code addToWorld} is the part-side counterpart of a block entity's {@code onReady}: the first moment the part
+     * has a host, a position and a side, i.e. a resolvable {@link MachineKey}. Retirement is deliberately <em>not</em>
+     * done here or in {@code removeFromWorld}, because that method is called both when the cable bus is destroyed and
+     * when its chunk merely unloads (see {@code CableBusBlockEntity#setRemoved} / {@code #onChunkUnloaded}); using it
+     * would free an identity on every unload. The two genuine removal signals live in the host instead:
+     * {@code CableBusContainer#removePartFromSide} for a single part and
+     * {@code CableBusBlockEntity#preRemoveSideEffects} for the whole block.
+     */
+    private void registerDeviceIdentity() {
+        if (getBlockEntity() != null && getBlockEntity().getLevel() instanceof ServerLevel serverLevel) {
+            var key = MachineKey.of(this);
+            if (key != null) {
+                var claimed = this.deviceIdentity.get();
+                var authenticated = DevicePrincipalRegistry.get(serverLevel).resolveOrRegister(key, claimed);
+                if (!authenticated.equals(claimed)) {
+                    this.deviceIdentity.adoptAuthenticatedId(authenticated);
+                    this.getHost().markForSave();
+                }
+            }
+        }
+    }
+
 }

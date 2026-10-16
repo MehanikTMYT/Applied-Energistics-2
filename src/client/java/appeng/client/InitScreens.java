@@ -48,6 +48,7 @@ import appeng.client.gui.implementations.PatternProviderScreen;
 import appeng.client.gui.implementations.PriorityScreen;
 import appeng.client.gui.implementations.QNBScreen;
 import appeng.client.gui.implementations.QuartzKnifeScreen;
+import appeng.client.gui.implementations.SecurityStationScreen;
 import appeng.client.gui.implementations.SkyStoneChestScreen;
 import appeng.client.gui.implementations.SpatialAnchorScreen;
 import appeng.client.gui.implementations.SpatialIOPortScreen;
@@ -85,6 +86,7 @@ import appeng.menu.implementations.PatternProviderMenu;
 import appeng.menu.implementations.PriorityMenu;
 import appeng.menu.implementations.QNBMenu;
 import appeng.menu.implementations.QuartzKnifeMenu;
+import appeng.menu.implementations.SecurityStationMenu;
 import appeng.menu.implementations.SetStockAmountMenu;
 import appeng.menu.implementations.SkyStonechestMenu;
 import appeng.menu.implementations.SpatialAnchorMenu;
@@ -150,6 +152,13 @@ public final class InitScreens {
         register(event, CraftConfirmMenu.TYPE, CraftConfirmScreen::new, "/screens/craft_confirm.json");
         register(event, CraftingStatusMenu.TYPE, CraftingStatusScreen::new, "/screens/crafting_status.json");
         register(event, SpatialAnchorMenu.TYPE, SpatialAnchorScreen::new, "/screens/spatial_anchor.json");
+        register(event, SecurityStationMenu.TYPE, SecurityStationScreen::new, "/screens/security_station.json");
+        register(event, appeng.menu.implementations.QuantumKeyImprinterMenu.TYPE,
+                appeng.client.gui.implementations.QuantumKeyImprinterScreen::new,
+                "/screens/quantum_key_imprinter.json");
+        register(event, appeng.menu.implementations.QuantumRoutingControllerMenu.TYPE,
+                appeng.client.gui.implementations.QuantumRoutingControllerScreen::new,
+                "/screens/quantum_routing_controller.json");
 
         // Terminals
         InitScreens.<MEStorageMenu, MEStorageScreen<MEStorageMenu>>register(event,

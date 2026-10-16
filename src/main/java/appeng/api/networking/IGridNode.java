@@ -36,6 +36,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import appeng.api.networking.crafting.ICraftingService;
+import appeng.api.networking.pathing.CapacityTier;
 import appeng.api.networking.pathing.IPathingService;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.util.AEColor;
@@ -196,4 +197,10 @@ public interface IGridNode {
     int getMaxChannels();
 
     int getUsedChannels();
+
+    /**
+     * @return The infrastructure capacity tier of this node's own native cable/controller hardware. Defaults to
+     *         {@link CapacityTier#STANDARD}.
+     */
+    CapacityTier getCapacityTier();
 }

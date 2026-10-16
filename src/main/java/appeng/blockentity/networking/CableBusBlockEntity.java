@@ -49,6 +49,9 @@ import net.neoforged.neoforge.model.data.ModelData;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.ISecurityService;
+import appeng.api.networking.security.SecurityPermissions;
 import appeng.api.parts.IFacadeContainer;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartItem;
@@ -113,6 +116,38 @@ public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlo
      */
     protected void updateBlockEntitySettings() {
         // FIXME: potentially invalidate voxel shape cache?
+    }
+
+    /**
+     * Round 31: destroying the whole cable bus retires the registry identity of every DEVICE part it carried.
+     * <p/>
+     * {@code preRemoveSideEffects} is what vanilla calls when the block entity is genuinely removed, and unlike
+     * {@code setRemoved()}/{@code onChunkUnloaded()} - which both funnel into {@code removeFromWorld()} - it does not
+     * fire on a chunk unload. Without this, rebuilding a cable bus on the same coordinates would hand its new parts the
+     * principals of the ones that were destroyed.
+     */
+    @Override
+    public void preRemoveSideEffects(net.minecraft.core.BlockPos blockPos,
+            net.minecraft.world.level.block.state.BlockState blockState) {
+        super.preRemoveSideEffects(blockPos, blockState);
+
+        if (getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            var registry = appeng.me.security.DevicePrincipalRegistry.get(serverLevel);
+            for (var side : net.minecraft.core.Direction.values()) {
+                retirePart(registry, getCableBus().getPart(side));
+            }
+            retirePart(registry, getCableBus().getPart(null));
+        }
+    }
+
+    private static void retirePart(appeng.me.security.DevicePrincipalRegistry registry,
+            @Nullable appeng.api.parts.IPart part) {
+        if (part instanceof appeng.api.networking.security.IDeviceIdentity) {
+            var key = appeng.me.security.MachineKey.of(part);
+            if (key != null) {
+                registry.retire(key);
+            }
+        }
     }
 
     @Override
@@ -339,6 +374,17 @@ public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlo
 
             // SelectedPart contains either a facade or a part. Never both.
             if (sp.part != null) {
+                // BUILD permission check: only meaningful if this part is already attached to a formed, secured
+                // grid. Denying here leaves the part fully intact (checked before any drop/removal side effects).
+                var node = sp.part.getGridNode();
+                var grid = node != null ? node.getGrid() : null;
+                if (grid != null) {
+                    var security = grid.getService(ISecurityService.class);
+                    if (!security.hasPermission(IActionSource.ofPlayer(player), SecurityPermissions.BUILD)) {
+                        return InteractionResult.FAIL;
+                    }
+                }
+
                 sp.part.addPartDrop(is, true);
                 sp.part.addAdditionalDrops(is, true);
                 if (remove) {

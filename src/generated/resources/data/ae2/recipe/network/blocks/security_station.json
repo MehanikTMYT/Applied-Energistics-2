@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "a": "#c:ingots/iron",
+    "b": "#c:chests/wooden",
+    "c": "ae2:fluix_glass_cable",
+    "d": "ae2:cell_component_16k",
+    "e": "ae2:engineering_processor"
+  },
+  "pattern": [
+    "aba",
+    "cdc",
+    "aea"
+  ],
+  "result": {
+    "id": "ae2:security_station"
+  }
+}

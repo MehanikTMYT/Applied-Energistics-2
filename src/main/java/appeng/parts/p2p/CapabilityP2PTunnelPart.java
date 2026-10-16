@@ -24,6 +24,7 @@ import net.minecraft.core.Direction;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 
 import appeng.api.parts.IPartItem;
+import appeng.core.AELog;
 import appeng.parts.PartAdjacentApi;
 
 /**
@@ -93,7 +94,15 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                 return emptyHandler;
             } else {
                 // This capability is already in use (as the nesting is > 1), so we return an empty handler to prevent
-                // infinite recursion.
+                // infinite recursion. Reaching depth > 1 means resolving this tunnel's adjacent capability recursed
+                // back into itself - a real P2P routing loop, not ordinary nesting (chaining distinct tunnels never
+                // re-enters the same instance, so their accessDepth never exceeds 1). Only the offending tunnel is
+                // affected: it reports empty for this call and every other, independent P2P tunnel keeps working.
+                AELog.warn(
+                        "P2P ROUTING LOOP: capability P2P tunnel %s at %s detected a re-entrant self-reference "
+                                + "(accessDepth=%d) while resolving its adjacent capability - returning an empty "
+                                + "handler for this call to break the cycle without recursing further.",
+                        getClass().getSimpleName(), getBlockEntity().getBlockPos(), accessDepth);
                 return emptyHandler;
             }
         }

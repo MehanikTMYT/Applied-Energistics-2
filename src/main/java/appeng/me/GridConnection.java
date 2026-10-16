@@ -32,6 +32,8 @@ import appeng.api.networking.IGridConnection;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.pathing.ChannelMode;
+import appeng.api.networking.security.ISecurityService;
+import appeng.api.networking.security.SecurityDomainState;
 import appeng.me.pathfinding.IPathItem;
 
 public class GridConnection implements IGridConnection, IPathItem {
@@ -144,6 +146,21 @@ public class GridConnection implements IGridConnection, IPathItem {
         }
     }
 
+    /**
+     * NOTE ON CAPACITY TIERS (Round 8): this deliberately stays the pre-existing flat
+     * {@code 32 * mode.getCableCapacityFactor()}, unrelated to either side's {@link CapacityTier}. Verified by tracing
+     * every call site of {@code IPathItem#getMaxChannels()}: the real channel-allocation bottleneck walk in
+     * {@link appeng.me.pathfinding.PathingCalculation#tryUseChannel} only ever follows
+     * {@link GridNode#getHighestSimilarAncestor()} (a chain of {@link GridNode}s, using
+     * {@code GridNode.subtreeMaxChannels}), and never calls this method - {@link GridConnection#hasFlag} always returns
+     * {@code false}, so a {@link GridConnection} is never even passed to {@code tryUseChannel}. This method is
+     * therefore purely informational/diagnostic and has zero effect on how many channels can actually be routed over a
+     * high-tier cable - that is governed entirely by {@link GridNode#getMaxChannels()} (which IS tier-aware, see
+     * there). The existing Q1/Q2/Q3 regression suite ({@code NetworkSlotIsolationTest},
+     * {@code MultipointSingleLaneQ2Test}, {@code RemoteQuantumLaneIsolationTest}) asserts this exact flat value as a
+     * load-bearing invariant for synthetic/remote-lane connections between arbitrary (non-cable) grid nodes, so it must
+     * not become tier- or flag-dependent.
+     */
     @Override
     public int getMaxChannels() {
         var mode = sideB.getGrid().getPathingService().getChannelMode();
@@ -196,8 +213,14 @@ public class GridConnection implements IGridConnection, IPathItem {
     }
 
     /**
+     * @return the newly created connection, or {@code null} if the two nodes belong to two different, already
+     *         {@link SecurityDomainState#SECURED} networks (or either side is already
+     *         {@link SecurityDomainState#CONFLICT}) - a fail-closed, pre-merge rejection: neither side is altered, and
+     *         the two grids never become one. This is the primary defense against cross-domain merges; see
+     *         {@link #securityDomainsAreCompatible}.
      * @throws IllegalStateException If the nodes are already connected.
      */
+    @Nullable
     public static GridConnection create(IGridNode aNode, IGridNode bNode,
             @Nullable Direction fromAtoB) {
         Objects.requireNonNull(aNode, "aNode");
@@ -210,6 +233,15 @@ public class GridConnection implements IGridConnection, IPathItem {
         if (a.hasConnection(b) || b.hasConnection(a)) {
             throw new IllegalStateException("Connection between node [%s] and [%s] on [%s] already exists.".formatted(
                     a, b, fromAtoB));
+        }
+
+        // Fail-closed pre-merge security check: reject the connection outright (before either node/grid is
+        // touched in any way) if it would bridge two independently-secured networks. Both sides are left
+        // completely intact - the caller (InWorldGridNode.findInWorldConnections, P2P tunnels, the toggle bus,
+        // quantum network bridges, ...) simply doesn't get a connection back, exactly like an incompatible cable
+        // color already causes a connection attempt to be silently skipped.
+        if (!securityDomainsAreCompatible(a, b)) {
+            return null;
         }
 
         // Create the actual connection
@@ -261,6 +293,34 @@ public class GridConnection implements IGridConnection, IPathItem {
                 a.beginVisit(gp);
             }
         }
+    }
+
+    /**
+     * True unless connecting {@code a} and {@code b} would bridge two
+     * already-independently-{@link SecurityDomainState#SECURED} networks bound to two different domains, or either side
+     * is already in {@link SecurityDomainState#CONFLICT} (in which case its true domain membership can no longer be
+     * trusted, so any further merge is refused too, defensively). A node with no grid yet (about to join one for the
+     * first time, e.g. a freshly-placed cable), or both nodes already sharing the same grid, are always compatible -
+     * there is nothing to conflict with.
+     */
+    private static boolean securityDomainsAreCompatible(GridNode a, GridNode b) {
+        var gridA = a.getMyGrid();
+        var gridB = b.getMyGrid();
+        if (gridA == null || gridB == null || gridA == gridB) {
+            return true;
+        }
+
+        var securityA = gridA.getService(ISecurityService.class);
+        var securityB = gridB.getService(ISecurityService.class);
+
+        if (securityA.getState() == SecurityDomainState.CONFLICT
+                || securityB.getState() == SecurityDomainState.CONFLICT) {
+            return false;
+        }
+
+        var domainA = securityA.getDomainId();
+        var domainB = securityB.getDomainId();
+        return domainA.isEmpty() || domainB.isEmpty() || domainA.equals(domainB);
     }
 
     private static boolean isGridABetterThanGridB(Grid gridA, Grid gridB) {

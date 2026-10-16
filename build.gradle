@@ -40,7 +40,6 @@ sourceSets {
     main {
         // TODO 1.21.11
         java {
-            exclude 'appeng/integration/modules/rei/**'
             exclude 'appeng/integration/modules/theoneprobe/**'
         }
         resources {
@@ -50,12 +49,6 @@ sourceSets {
     client {
         compileClasspath += main.output
         runtimeClasspath += main.output
-
-        // TODO 1.21.11
-        java {
-            exclude 'appeng/client/integration/rei/**'
-            exclude 'appeng/client/integration/emi/**'
-        }
     }
     test {
         compileClasspath += client.output
@@ -83,21 +76,12 @@ dependencies {
 
     // compile against provided APIs
     clientCompileOnly "dev.emi:emi-neoforge:${emi_version}:api"
-    clientCompileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
     compileOnly "mcp.mobius.waila:wthit-api:neo-${project.wthit_version}"
     compileOnly "curse.maven:jade-324717:${project.jade_file_id}"
-    clientCompileOnly "mezz.jei:jei-${project.jei_minecraft_version}-neoforge-api:${project.jei_version}"
 
     switch (project.runtime_itemlist_mod) {
         case "emi":
             localRuntimeOnly "dev.emi:emi-neoforge:${emi_version}"
-            break
-        case "rei":
-            localRuntimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
-            break
-        case "jei":
-            localRuntimeOnly "mezz.jei:jei-${project.jei_minecraft_version}-neoforge:${project.jei_version}"
             break
     }
 
@@ -231,7 +215,6 @@ final generateModMetadata = tasks.register('generateModMetadata', ProcessResourc
             'minecraft_version',
             'neoforge_version_range',
             'jade_version_range',
-            'jei_version',
             'guideme_version'
     ].collectEntries { [it, project[it]] }
 

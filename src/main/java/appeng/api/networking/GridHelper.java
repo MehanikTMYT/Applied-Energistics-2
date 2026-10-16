@@ -179,8 +179,13 @@ public final class GridHelper {
      *
      * @param a to be connected gridnode
      * @param b to be connected gridnode
+     * @return the new connection, or {@code null} if it was rejected because it would bridge two independently secured
+     *         networks (see {@code appeng.me.GridConnection#create} for the exact rule) - callers must handle a
+     *         {@code null} result gracefully, the same way an out-of-channels or incompatible-cable-color connection
+     *         attempt is already handled elsewhere.
      * @throws IllegalStateException If the nodes are already connected.
      */
+    @Nullable
     public static IGridConnection createConnection(IGridNode a, IGridNode b) {
         return GridConnection.create(a, b, null);
     }

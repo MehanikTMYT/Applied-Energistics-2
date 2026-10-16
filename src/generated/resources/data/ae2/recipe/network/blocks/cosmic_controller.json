@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "ae2:singularity_controller",
+    "ae2:singularity",
+    "ae2:singularity",
+    "ae2:singularity",
+    "ae2:singularity"
+  ],
+  "result": {
+    "id": "ae2:cosmic_controller"
+  }
+}

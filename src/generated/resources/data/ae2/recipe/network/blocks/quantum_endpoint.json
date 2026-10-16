@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "e": "ae2:engineering_processor",
+    "f": "ae2:fluix_crystal",
+    "p": "ae2:singularity"
+  },
+  "pattern": [
+    "fef",
+    "epe",
+    "fef"
+  ],
+  "result": {
+    "id": "ae2:quantum_endpoint"
+  }
+}

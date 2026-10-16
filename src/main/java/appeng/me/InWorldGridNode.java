@@ -95,6 +95,10 @@ public class InWorldGridNode extends GridNode {
                 }
             }
 
+            // A null result means the connection was rejected (e.g. because it would have bridged two
+            // independently-secured networks) - the fail-closed pre-merge security check, see
+            // GridConnection#securityDomainsAreCompatible. Skip this side and move on, exactly like an
+            // incompatible cable color is already skipped above; neither node is affected.
             GridConnection.create(this, adjacentNode, direction);
         }
     }

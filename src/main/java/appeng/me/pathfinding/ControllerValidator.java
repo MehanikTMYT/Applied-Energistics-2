@@ -27,11 +27,18 @@ import net.minecraft.core.Direction;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridVisitor;
+import appeng.api.networking.pathing.CapacityTier;
 import appeng.api.networking.pathing.ControllerState;
 import appeng.blockentity.networking.ControllerBlockEntity;
 
 /**
  * Validates that the controller shape doesn't exceed the max size, and counts the number of adjacent controllers.
+ * <p>
+ * Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE") also requires controller multiblocks to be tier-homogeneous: a single
+ * physical controller structure must be built entirely out of one {@link CapacityTier} of controller block. Mixing,
+ * e.g., one Cosmic Controller block into an otherwise Standard controller structure must not silently upgrade (or
+ * partially upgrade) the whole structure's capacity - it fails exactly like any other malformed controller shape, via
+ * the pre-existing {@link ControllerState#CONTROLLER_CONFLICT} fail-safe state.
  */
 public class ControllerValidator implements IGridVisitor {
 
@@ -48,6 +55,11 @@ public class ControllerValidator implements IGridVisitor {
     private int maxX;
     private int maxY;
     private int maxZ;
+    /**
+     * The {@link CapacityTier} of the first controller block encountered. Every other controller block found in the
+     * same structure must share this tier, or the structure is a {@link ControllerState#CONTROLLER_CONFLICT}.
+     */
+    private CapacityTier firstTier = null;
 
     /**
      * @param pos The position of the controller this visitor is first applied to.
@@ -112,6 +124,18 @@ public class ControllerValidator implements IGridVisitor {
             this.maxY = Math.max(pos.getY(), this.maxY);
             this.minZ = Math.min(pos.getZ(), this.minZ);
             this.maxZ = Math.max(pos.getZ(), this.maxZ);
+
+            var tier = node.getCapacityTier();
+            if (this.firstTier == null) {
+                this.firstTier = tier;
+            } else if (this.firstTier != tier) {
+                // Tier-homogeneity violation: this controller structure mixes capacity tiers (e.g. one Cosmic
+                // Controller block bolted onto an otherwise Standard controller). One cheap high-tier block must
+                // not be able to upgrade (or be downgraded by) the rest of the structure - fail exactly like any
+                // other malformed controller shape.
+                this.valid = false;
+                return false;
+            }
 
             if (this.maxX - this.minX < MAX_SIZE
                     && this.maxY - this.minY < MAX_SIZE

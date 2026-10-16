@@ -36,14 +36,25 @@ import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
+import appeng.api.networking.pathing.CapacityTier;
 import appeng.block.AEBaseEntityBlock;
 import appeng.blockentity.networking.ControllerBlockEntity;
-import appeng.core.definitions.AEBlocks;
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;
 import appeng.menu.me.networktool.NetworkStatusMenu;
 
 public class ControllerBlock extends AEBaseEntityBlock<ControllerBlockEntity> {
+
+    /**
+     * Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): the infrastructure capacity tier of this specific controller block.
+     * Defaults to {@link CapacityTier#STANDARD}, reproducing the original single-tier controller exactly.
+     * {@link ControllerBlockEntity} reads this from its own block state to configure its grid node's tier (see
+     * {@link ControllerBlockEntity#ControllerBlockEntity}) - a single shared {@code ControllerBlockEntity} class and
+     * {@code BlockEntityType} serve every tier, only the owning {@link ControllerBlock} instance differs (see
+     * {@code AEBlockEntities#CONTROLLER}), exactly like {@code DENSE_CAPACITY} already differentiates cable parts by
+     * class rather than by a block property.
+     */
+    private final CapacityTier capacityTier;
 
     public enum ControllerBlockState implements StringRepresentable {
         offline, online, conflicted;
@@ -77,9 +88,18 @@ public class ControllerBlock extends AEBaseEntityBlock<ControllerBlockEntity> {
             ControllerRenderType.class);
 
     public ControllerBlock(Properties p) {
+        this(p, CapacityTier.STANDARD);
+    }
+
+    public ControllerBlock(Properties p, CapacityTier capacityTier) {
         super(metalProps(p).strength(6));
+        this.capacityTier = capacityTier;
         this.registerDefaultState(this.defaultBlockState().setValue(CONTROLLER_STATE, ControllerBlockState.offline)
                 .setValue(CONTROLLER_TYPE, ControllerRenderType.block));
+    }
+
+    public CapacityTier getCapacityTier() {
+        return capacityTier;
     }
 
     @Override
@@ -145,7 +165,11 @@ public class ControllerBlock extends AEBaseEntityBlock<ControllerBlockEntity> {
         // Do NOT query block entity:
         // - in Spatial IO movement, block entity might have been removed but block might still be there
         // - if we call getBlockEntity a new block entity will be loaded even though it has already been removed (bad!)
-        return level.getBlockState(new BlockPos(x, y, z)).is(AEBlocks.CONTROLLER.block());
+        // Round 8: matches ANY CapacityTier of controller block for connected-texture purposes (purely cosmetic -
+        // whether a mixed-tier run of controller blocks is actually a *valid* grid multiblock is decided
+        // separately and correctly by appeng.me.pathfinding.ControllerValidator, which does enforce
+        // tier-homogeneity). Was previously hardcoded to the single pre-Round-8 AEBlocks.CONTROLLER identity.
+        return level.getBlockState(new BlockPos(x, y, z)).getBlock() instanceof ControllerBlock;
     }
 
     @Override

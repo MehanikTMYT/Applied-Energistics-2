@@ -128,9 +128,11 @@ public final class Tooltips {
                         emptyingAction.description().copy().withStyle(NORMAL_TOOLTIP_TEXT)).withStyle(MUTED_COLOR));
     }
 
-    public static Component getSetAmountTooltip() {
-        return ButtonToolTips.ModifyAmountAction.text(Tooltips.getMouseButtonText(InputConstants.MOUSE_BUTTON_MIDDLE))
-                .withStyle(MUTED_COLOR);
+    /**
+     * @param keyName The display name of the mouse/key binding that opens the amount dialog (i.e. Pick Block).
+     */
+    public static Component getSetAmountTooltip(Component keyName) {
+        return ButtonToolTips.ModifyAmountAction.text(keyName).withStyle(MUTED_COLOR);
     }
 
     public static Component getMouseButtonText(int button) {
@@ -204,12 +206,14 @@ public final class Tooltips {
         return durationStr.withStyle(NUMBER_TEXT);
     }
 
-    public static final String[] units = new String[] { "k", "M", "G", "T", "P", "E" };
-    public static final long[] DECIMAL_NUMS = new long[] { 1000L, 1000_000L, 1000_000_000L, 1000_000_000_000L,
+    private static final String[] units = new String[] { "k", "M", "G", "T", "P", "E" };
+    private static final long[] DECIMAL_NUMS = new long[] { 1000L, 1000_000L, 1000_000_000L, 1000_000_000_000L,
             1000_000_000_000_000L,
             1000_000_000_000_000_000L };
-    public static final long[] BYTE_NUMS = new long[] { 1024L, 1024 * 1024L, 1024 * 1024 * 1024L,
-            1024 * 1024 * 1024 * 1024L };
+    private static final long[] BYTE_NUMS = new long[] { 1024L, 1024 * 1024L, 1024 * 1024 * 1024L,
+            1024 * 1024 * 1024 * 1024L,
+            1024L * 1024 * 1024 * 1024 * 1024,
+            1024L * 1024 * 1024 * 1024 * 1024 * 1024 };
 
     public static Component ofAmount(GenericStack stack) {
         return Component.literal(stack.what().formatAmount(stack.amount(), AmountFormat.FULL))

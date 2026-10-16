@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "ae2:quantum_me_p2p_tunnel",
+    "ae2:engineering_processor",
+    "ae2:singularity"
+  ],
+  "result": {
+    "id": "ae2:singularity_me_p2p_tunnel"
+  }
+}

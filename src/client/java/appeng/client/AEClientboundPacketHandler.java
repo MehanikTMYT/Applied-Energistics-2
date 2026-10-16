@@ -63,6 +63,7 @@ import appeng.core.network.clientbound.MockExplosionPacket;
 import appeng.core.network.clientbound.MolecularAssemblerAnimationPacket;
 import appeng.core.network.clientbound.NetworkStatusPacket;
 import appeng.core.network.clientbound.PatternAccessTerminalPacket;
+import appeng.core.network.clientbound.SecurityStationStatusPacket;
 import appeng.core.network.clientbound.SetLinkStatusPacket;
 import appeng.core.particles.EnergyParticleData;
 import appeng.core.particles.ParticleTypes;
@@ -190,6 +191,35 @@ public class AEClientboundPacketHandler {
 
         if (gs instanceof NetworkStatusScreen) {
             ((NetworkStatusScreen) gs).processServerUpdate(packet.status());
+        }
+    }
+
+    public void handleSecurityStationStatusPacket(SecurityStationStatusPacket packet, Minecraft minecraft,
+            Player player) {
+        Screen gs = Minecraft.getInstance().screen;
+
+        if (gs instanceof appeng.client.gui.implementations.SecurityStationScreen securityScreen) {
+            securityScreen.processServerUpdate(packet);
+        }
+    }
+
+    public void handleQuantumKeyImprinterStatusPacket(
+            appeng.core.network.clientbound.QuantumKeyImprinterStatusPacket packet, Minecraft minecraft,
+            Player player) {
+        Screen gs = Minecraft.getInstance().screen;
+
+        if (gs instanceof appeng.client.gui.implementations.QuantumKeyImprinterScreen imprinterScreen) {
+            imprinterScreen.processServerUpdate(packet);
+        }
+    }
+
+    public void handleQuantumRoutingControllerStatusPacket(
+            appeng.core.network.clientbound.QuantumRoutingControllerStatusPacket packet, Minecraft minecraft,
+            Player player) {
+        Screen gs = Minecraft.getInstance().screen;
+
+        if (gs instanceof appeng.client.gui.implementations.QuantumRoutingControllerScreen routingScreen) {
+            routingScreen.processServerUpdate(packet);
         }
     }
 
@@ -342,6 +372,11 @@ public class AEClientboundPacketHandler {
         register(event, ExportedGridContent.TYPE, this::handleExportedGridContent);
         register(event, CraftingJobStatusPacket.TYPE, this::handleCraftingJobStatusPacket);
         register(event, ConfigValuePacket.TYPE, this::handleConfigValuePacket);
+        register(event, SecurityStationStatusPacket.TYPE, this::handleSecurityStationStatusPacket);
+        register(event, appeng.core.network.clientbound.QuantumKeyImprinterStatusPacket.TYPE,
+                this::handleQuantumKeyImprinterStatusPacket);
+        register(event, appeng.core.network.clientbound.QuantumRoutingControllerStatusPacket.TYPE,
+                this::handleQuantumRoutingControllerStatusPacket);
     }
 
     private static <T extends ClientboundPacket> void register(RegisterClientPayloadHandlersEvent event,

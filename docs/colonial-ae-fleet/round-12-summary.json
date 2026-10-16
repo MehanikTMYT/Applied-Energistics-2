@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-19",
+  "round": 12,
+  "verdict": "PROVEN_WITH_LIMITATIONS",
+  "scope": "explicit sparse HUB join template and Mk II 64-channel production vertical slice",
+  "repository": "/root/home/forks/ae-stack/core/Applied-Energistics-2",
+  "branch": "main",
+  "head": "45f315517ea346efc0babd02c85c6b9d32dc8acf",
+  "minecraft": "26.1.2",
+  "neoforge": "26.1.2.21-beta",
+  "baseline": { "junit_cases": 837, "gametest": 79, "build": "PASS" },
+  "validation": {
+    "junit_cases": 852,
+    "junit_passed": 851,
+    "junit_skipped": 1,
+    "junit_failed": 0,
+    "gametest_passed": 85,
+    "gametest_failed": 0,
+    "build": "PASS",
+    "diff_check": "PASS",
+    "qnb_changed": false,
+    "server_done": true,
+    "client_resource_reload": true,
+    "interactive_world_smoke": false
+  },
+  "aggregator": {
+    "pre_review_job": "2cb2734e-a39e-479e-9ca1-90109ceeb6ec",
+    "post_review_job": "0a4884a8-2d02-46d1-a1e2-ebe54265f6c9",
+    "providers": ["qwen", "gemini", "chatgpt-free"],
+    "chatgpt_artifact_issue": "stale Round-10 conversation content; excluded from both consensuses"
+  },
+  "architecture": {
+    "hub_policy_model": "incremental explicit-anchor authoring template; exact edges only",
+    "exact_edges_authority": true,
+    "automatic_failover": false,
+    "capacity_tier": "QUANTUM",
+    "mk2_ceiling": 64
+  },
+  "hardening": "Added anchor-credential revoke regression proving all incident live arms close without identity/intent/member-state deletion",
+  "known_flakes": ["fe_charger timed out in one of two 85-test runs; unrelated and passed on retry"],
+  "limitations": ["interactive client world not verified", "human visual design pending", "server Gradle stdin did not forward stop"],
+  "deferred": ["MESH", "automatic failover", "alternate routing", "Mk III", "Mk IV", "final power balance", "movement/rebind"]
+}

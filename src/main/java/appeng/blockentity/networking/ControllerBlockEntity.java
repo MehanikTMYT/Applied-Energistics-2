@@ -54,6 +54,14 @@ public class ControllerBlockEntity extends AENetworkedPoweredBlockEntity {
         this.setInternalPublicPowerStorage(true);
         this.getMainNode().setIdlePowerUsage(3);
         this.getMainNode().setFlags(GridFlags.CANNOT_CARRY, GridFlags.DENSE_CAPACITY);
+        // Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): a single shared ControllerBlockEntity class/BlockEntityType
+        // serves every CapacityTier - which tier applies is a property of the specific ControllerBlock instance
+        // this block entity was placed as (see ControllerBlock#getCapacityTier), exactly like DENSE_CAPACITY
+        // already differentiates cable parts by class rather than needing a block property here. Falls back to
+        // STANDARD if the block isn't (yet) a ControllerBlock (e.g. during very early construction/tests).
+        if (blockState.getBlock() instanceof ControllerBlock controllerBlock) {
+            this.getMainNode().setCapacityTier(controllerBlock.getCapacityTier());
+        }
     }
 
     @Override

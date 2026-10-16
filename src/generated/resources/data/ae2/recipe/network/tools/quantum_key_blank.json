@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "ae2:fluix_crystal",
+    "#c:ingots/gold"
+  ],
+  "result": {
+    "count": 4,
+    "id": "ae2:quantum_key_blank"
+  }
+}

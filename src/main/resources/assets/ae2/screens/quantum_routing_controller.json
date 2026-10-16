@@ -1,0 +1,30 @@
+{
+  "$schema": "schema.json",
+  "includes": ["common/common.json"],
+  "background": {
+    "texture": "guis/networkstatus.png",
+    "srcRect": [0, 0, 195, 157]
+  },
+  "text": {
+    "dialog_title": {
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    }
+  },
+  "widgets": {
+    "repair_button": {
+      "left": 8,
+      "top": 128,
+      "width": 85,
+      "height": 14
+    },
+    "next_pair_button": {
+      "left": 101,
+      "top": 128,
+      "width": 85,
+      "height": 14
+    }
+  }
+}

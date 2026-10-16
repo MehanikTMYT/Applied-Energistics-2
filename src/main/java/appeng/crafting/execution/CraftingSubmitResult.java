@@ -24,6 +24,8 @@ public record CraftingSubmitResult(@Nullable ICraftingLink link,
 
     public static final ICraftingSubmitResult CPU_TOO_SMALL = simpleError(CraftingSubmitErrorCode.CPU_TOO_SMALL);
 
+    public static final ICraftingSubmitResult SECURITY_DENIED = simpleError(CraftingSubmitErrorCode.SECURITY_DENIED);
+
     public static ICraftingSubmitResult simpleError(CraftingSubmitErrorCode code) {
         return new CraftingSubmitResult(null, code, null);
     }

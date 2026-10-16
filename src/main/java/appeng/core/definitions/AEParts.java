@@ -47,19 +47,28 @@ import appeng.parts.misc.CableAnchorPart;
 import appeng.parts.misc.InterfacePart;
 import appeng.parts.misc.InvertedToggleBusPart;
 import appeng.parts.misc.ToggleBusPart;
+import appeng.parts.networking.CosmicSmartCablePart;
+import appeng.parts.networking.CosmicSmartDenseCablePart;
 import appeng.parts.networking.CoveredCablePart;
 import appeng.parts.networking.CoveredDenseCablePart;
 import appeng.parts.networking.EnergyAcceptorPart;
 import appeng.parts.networking.GlassCablePart;
+import appeng.parts.networking.QuantumSmartCablePart;
+import appeng.parts.networking.QuantumSmartDenseCablePart;
 import appeng.parts.networking.QuartzFiberPart;
+import appeng.parts.networking.SingularitySmartCablePart;
+import appeng.parts.networking.SingularitySmartDenseCablePart;
 import appeng.parts.networking.SmartCablePart;
 import appeng.parts.networking.SmartDenseCablePart;
+import appeng.parts.p2p.CosmicMEP2PTunnelPart;
 import appeng.parts.p2p.FEP2PTunnelPart;
 import appeng.parts.p2p.FluidP2PTunnelPart;
 import appeng.parts.p2p.ItemP2PTunnelPart;
 import appeng.parts.p2p.LightP2PTunnelPart;
 import appeng.parts.p2p.MEP2PTunnelPart;
+import appeng.parts.p2p.QuantumMEP2PTunnelPart;
 import appeng.parts.p2p.RedstoneP2PTunnelPart;
+import appeng.parts.p2p.SingularityMEP2PTunnelPart;
 import appeng.parts.reporting.ConversionMonitorPart;
 import appeng.parts.reporting.CraftingTerminalPart;
 import appeng.parts.reporting.DarkPanelPart;
@@ -82,6 +91,15 @@ public final class AEParts {
     public static final ColoredItemDefinition<ColoredPartItem<GlassCablePart>> GLASS_CABLE = constructColoredDefinition("ME Glass Cable", "glass_cable", GlassCablePart.class, GlassCablePart::new);
     public static final ColoredItemDefinition<ColoredPartItem<CoveredDenseCablePart>> COVERED_DENSE_CABLE = constructColoredDefinition("ME Dense Covered Cable", "covered_dense_cable", CoveredDenseCablePart.class, CoveredDenseCablePart::new);
     public static final ColoredItemDefinition<ColoredPartItem<SmartDenseCablePart>> SMART_DENSE_CABLE = constructColoredDefinition("ME Dense Smart Cable", "smart_dense_cable", SmartDenseCablePart.class, SmartDenseCablePart::new);
+    // Round 8 ("HIGH-CAPACITY ME INFRASTRUCTURE"): higher CapacityTier Smart/Dense Smart cables. Geometry,
+    // AECableType, box collision and item icon assets are all deliberately identical to their Standard-tier
+    // counterparts (see the Round 8 report) - only the channel capacity differs.
+    public static final ColoredItemDefinition<ColoredPartItem<QuantumSmartCablePart>> QUANTUM_SMART_CABLE = constructColoredDefinition("ME Quantum Smart Cable", "quantum_smart_cable", QuantumSmartCablePart.class, QuantumSmartCablePart::new);
+    public static final ColoredItemDefinition<ColoredPartItem<QuantumSmartDenseCablePart>> QUANTUM_SMART_DENSE_CABLE = constructColoredDefinition("ME Quantum Dense Smart Cable", "quantum_smart_dense_cable", QuantumSmartDenseCablePart.class, QuantumSmartDenseCablePart::new);
+    public static final ColoredItemDefinition<ColoredPartItem<SingularitySmartCablePart>> SINGULARITY_SMART_CABLE = constructColoredDefinition("ME Singularity Smart Cable", "singularity_smart_cable", SingularitySmartCablePart.class, SingularitySmartCablePart::new);
+    public static final ColoredItemDefinition<ColoredPartItem<SingularitySmartDenseCablePart>> SINGULARITY_SMART_DENSE_CABLE = constructColoredDefinition("ME Singularity Dense Smart Cable", "singularity_smart_dense_cable", SingularitySmartDenseCablePart.class, SingularitySmartDenseCablePart::new);
+    public static final ColoredItemDefinition<ColoredPartItem<CosmicSmartCablePart>> COSMIC_SMART_CABLE = constructColoredDefinition("ME Cosmic Smart Cable", "cosmic_smart_cable", CosmicSmartCablePart.class, CosmicSmartCablePart::new);
+    public static final ColoredItemDefinition<ColoredPartItem<CosmicSmartDenseCablePart>> COSMIC_SMART_DENSE_CABLE = constructColoredDefinition("ME Cosmic Dense Smart Cable", "cosmic_smart_dense_cable", CosmicSmartDenseCablePart.class, CosmicSmartDenseCablePart::new);
     public static final ItemDefinition<PartItem<QuartzFiberPart>> QUARTZ_FIBER = createPart("Quartz Fiber", AEPartIds.QUARTZ_FIBER, QuartzFiberPart.class, QuartzFiberPart::new);
     public static final ItemDefinition<PartItem<ToggleBusPart>> TOGGLE_BUS = createPart("ME Toggle Bus", AEPartIds.TOGGLE_BUS, ToggleBusPart.class, ToggleBusPart::new);
     public static final ItemDefinition<PartItem<InvertedToggleBusPart>> INVERTED_TOGGLE_BUS = createPart("ME Inverted Toggle Bus", AEPartIds.INVERTED_TOGGLE_BUS, InvertedToggleBusPart.class, InvertedToggleBusPart::new);
@@ -106,6 +124,11 @@ public final class AEParts {
     public static final ItemDefinition<PartItem<PatternAccessTerminalPart>> PATTERN_ACCESS_TERMINAL = createPart("ME Pattern Access Terminal", AEPartIds.PATTERN_ACCESS_TERMINAL, PatternAccessTerminalPart.class, PatternAccessTerminalPart::new);
     public static final ItemDefinition<PartItem<EnergyAcceptorPart>> ENERGY_ACCEPTOR = createPart("Energy Acceptor", AEPartIds.ENERGY_ACCEPTOR, EnergyAcceptorPart.class, EnergyAcceptorPart::new);
     public static final ItemDefinition<PartItem<MEP2PTunnelPart>> ME_P2P_TUNNEL = createPart("ME P2P Tunnel", AEPartIds.ME_P2P_TUNNEL, MEP2PTunnelPart.class, MEP2PTunnelPart::new);
+    // Round 9 ("HIGH-TIER ME P2P"): higher CapacityTier ME P2P tunnels. Same MEP2PTunnelPart mechanism, geometry and
+    // rendering (see the Round 9 report) - only the outer node's channel ceiling differs.
+    public static final ItemDefinition<PartItem<QuantumMEP2PTunnelPart>> QUANTUM_ME_P2P_TUNNEL = createPart("ME Quantum P2P Tunnel", AEPartIds.QUANTUM_ME_P2P_TUNNEL, QuantumMEP2PTunnelPart.class, QuantumMEP2PTunnelPart::new);
+    public static final ItemDefinition<PartItem<SingularityMEP2PTunnelPart>> SINGULARITY_ME_P2P_TUNNEL = createPart("ME Singularity P2P Tunnel", AEPartIds.SINGULARITY_ME_P2P_TUNNEL, SingularityMEP2PTunnelPart.class, SingularityMEP2PTunnelPart::new);
+    public static final ItemDefinition<PartItem<CosmicMEP2PTunnelPart>> COSMIC_ME_P2P_TUNNEL = createPart("ME Cosmic P2P Tunnel", AEPartIds.COSMIC_ME_P2P_TUNNEL, CosmicMEP2PTunnelPart.class, CosmicMEP2PTunnelPart::new);
     public static final ItemDefinition<PartItem<RedstoneP2PTunnelPart>> REDSTONE_P2P_TUNNEL = createPart("Redstone P2P Tunnel", AEPartIds.REDSTONE_P2P_TUNNEL, RedstoneP2PTunnelPart.class, RedstoneP2PTunnelPart::new);
     public static final ItemDefinition<PartItem<ItemP2PTunnelPart>> ITEM_P2P_TUNNEL = createPart("Item P2P Tunnel", AEPartIds.ITEM_P2P_TUNNEL, ItemP2PTunnelPart.class, ItemP2PTunnelPart::new);
     public static final ItemDefinition<PartItem<FluidP2PTunnelPart>> FLUID_P2P_TUNNEL = createPart("Fluid P2P Tunnel", AEPartIds.FLUID_P2P_TUNNEL, FluidP2PTunnelPart.class, FluidP2PTunnelPart::new);

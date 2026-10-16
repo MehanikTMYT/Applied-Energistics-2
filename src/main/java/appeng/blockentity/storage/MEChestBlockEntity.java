@@ -57,6 +57,7 @@ import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.events.GridPowerStorageStateChanged;
 import appeng.api.networking.events.GridPowerStorageStateChanged.PowerEventType;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.security.ISecurityService;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -82,6 +83,7 @@ import appeng.core.localization.GuiText;
 import appeng.core.localization.PlayerMessages;
 import appeng.helpers.IPriorityHost;
 import appeng.me.helpers.MachineSource;
+import appeng.me.security.SecurityAwareMEStorage;
 import appeng.me.storage.DelegatingMEInventory;
 import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
@@ -615,13 +617,42 @@ public class MEChestBlockEntity extends AENetworkedPoweredBlockEntity
         }
     }
 
+    /**
+     * The {@code AECapabilities.ME_STORAGE} block capability - i.e. what a neighbouring block, pipe or addon gets.
+     * <p/>
+     * <b>Round 27 (FINDING-2).</b> This used to hand out {@link #getInventory()} directly: the raw cell, with no ACL in
+     * the path at all. On a SECURED network that let anything able to read the capability from an adjacent position
+     * insert into and extract from the cell without holding {@code INJECT}/{@code EXTRACT} on the network the chest
+     * belongs to - while the very same cell, reached <em>through</em> the network, was correctly gated.
+     * <p/>
+     * The external view is now wrapped in {@link SecurityAwareMEStorage}, so the two paths agree. Combined with the
+     * Round 27 change to {@code SecurityService#hasPermission}, this implements the owner's Decision 3A exactly:
+     * <ul>
+     * <li><b>SECURED</b> - an external caller that cannot name an authenticated actor gets only what was explicitly
+     * granted to {@code EVERYONE}, and nothing otherwise;</li>
+     * <li><b>LEGACY</b> - unchanged, because {@code hasPermission} returns {@code true} for every source on a LEGACY
+     * network; existing external automation keeps working exactly as before.</li>
+     * </ul>
+     * The chest is <em>not</em> given a device identity of its own and is <em>not</em> turned into a gateway: it stays
+     * the passive storage endpoint Round 25 classified it as. The caller is the actor here, and the wrapper simply
+     * stops the chest from being a way around the check that applies everywhere else.
+     * <p/>
+     * If the chest has no grid yet (freshly placed, or not connected to anything) there is no security domain to
+     * consult, and the unwrapped storage is returned - such a chest cannot be part of a SECURED network in the first
+     * place.
+     */
     @Nullable
     public MEStorage getMEStorage(Direction side) {
-        if (side != getFront()) {
-            return getInventory();
-        } else {
+        if (side == getFront()) {
             return null;
         }
+
+        var storage = getInventory();
+        var grid = getMainNode().getGrid();
+        if (grid == null) {
+            return storage;
+        }
+        return new SecurityAwareMEStorage(storage, grid.getService(ISecurityService.class));
     }
 
     private class FluidHandler extends InsertionOnlyResourceHandlerWithJournal<FluidResource, GenericStack> {

@@ -181,6 +181,9 @@ public final class AEItems {
 
     public static final ItemDefinition<NetworkToolItem> NETWORK_TOOL = item("Network Tool", AEItemIds.NETWORK_TOOL, p -> new NetworkToolItem(p.stacksTo(1)));
     public static final ItemDefinition<MemoryCardItem> MEMORY_CARD = item("Memory Card", AEItemIds.MEMORY_CARD, p -> new MemoryCardItem(p.stacksTo(1)));
+    // Phase O ("Quantum Q4 provisioning/credential foundation")
+    public static final ItemDefinition<MaterialItem> QUANTUM_KEY_BLANK = item("Blank Quantum Key", AEItemIds.QUANTUM_KEY_BLANK, MaterialItem::new);
+    public static final ItemDefinition<appeng.items.tools.QuantumKeyItem> QUANTUM_KEY = item("Encoded Quantum Key", AEItemIds.QUANTUM_KEY, p -> new appeng.items.tools.QuantumKeyItem(p.stacksTo(1)));
 
     public static final ItemDefinition<FacadeItem> FACADE = item("Cable Facade", AEItemIds.FACADE, FacadeItem::new);
     public static final ItemDefinition<MaterialItem> BLANK_PATTERN = item("Blank Pattern", AEItemIds.BLANK_PATTERN, MaterialItem::new);

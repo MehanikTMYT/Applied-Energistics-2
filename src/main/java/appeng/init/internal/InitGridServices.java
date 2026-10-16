@@ -22,9 +22,11 @@ import appeng.api.networking.GridServices;
 import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.pathing.IPathingService;
+import appeng.api.networking.security.ISecurityService;
 import appeng.api.networking.spatial.ISpatialService;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.ticking.ITickManager;
+import appeng.me.security.SecurityService;
 import appeng.me.service.CraftingService;
 import appeng.me.service.EnergyService;
 import appeng.me.service.P2PService;
@@ -41,6 +43,7 @@ public final class InitGridServices {
     public static void init() {
         GridServices.register(ITickManager.class, TickManagerService.class);
         GridServices.register(IPathingService.class, PathingService.class);
+        GridServices.register(ISecurityService.class, SecurityService.class);
         GridServices.register(IEnergyService.class, EnergyService.class);
         GridServices.register(IStorageService.class, StorageService.class);
         GridServices.register(P2PService.class, P2PService.class);

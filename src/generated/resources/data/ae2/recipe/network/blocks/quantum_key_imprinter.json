@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "e": "ae2:engineering_processor",
+    "f": "ae2:fluix_crystal",
+    "p": "ae2:singularity",
+    "r": "ae2:quantum_ring"
+  },
+  "pattern": [
+    "epe",
+    "frf",
+    "epe"
+  ],
+  "result": {
+    "id": "ae2:quantum_key_imprinter"
+  }
+}

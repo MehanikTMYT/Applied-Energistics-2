@@ -20,6 +20,7 @@ package appeng.server;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
@@ -29,5 +30,6 @@ public interface ISubCommand {
     default void addArguments(LiteralArgumentBuilder<CommandSourceStack> builder) {
     }
 
-    void call(MinecraftServer srv, CommandContext<CommandSourceStack> ctx, CommandSourceStack sender);
+    void call(MinecraftServer srv, CommandContext<CommandSourceStack> ctx, CommandSourceStack sender)
+            throws CommandSyntaxException;
 }
