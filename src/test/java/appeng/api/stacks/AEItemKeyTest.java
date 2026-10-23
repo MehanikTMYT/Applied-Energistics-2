@@ -208,7 +208,7 @@ class AEItemKeyTest {
     }
 
     @Test
-    void testHasComponents() {
+    void testHasComponentsUpstream() {
         assertFalse(AEItemKey.of(Items.DIAMOND_PICKAXE).hasComponents());
         assertFalse(AEItemKey.of(new ItemStack(Items.DIAMOND_PICKAXE)).hasComponents());
 
@@ -303,22 +303,6 @@ class AEItemKeyTest {
         assertNotNull(plainRestored);
         assertEquals(plain, plainRestored);
         assertFalse(plainRestored.hasComponents());
-    }
-
-    @Test
-    void testHasComponents() {
-        assertFalse(AEItemKey.of(Items.DIAMOND_PICKAXE).hasComponents());
-        assertFalse(AEItemKey.of(new ItemStack(Items.DIAMOND_PICKAXE)).hasComponents());
-
-        var undamagedPick = new ItemStack(Items.DIAMOND_PICKAXE);
-        assertFalse(AEItemKey.of(undamagedPick).hasComponents());
-
-        var namedStack = new ItemStack(Items.DIAMOND_PICKAXE);
-        namedStack.set(DataComponents.CUSTOM_NAME, Component.literal("variant"));
-        assertTrue(AEItemKey.of(namedStack).hasComponents());
-
-        namedStack.remove(DataComponents.CUSTOM_NAME);
-        assertFalse(AEItemKey.of(namedStack).hasComponents());
     }
 
     /**
