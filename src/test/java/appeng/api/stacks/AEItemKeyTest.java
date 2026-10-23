@@ -18,9 +18,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
@@ -207,6 +205,22 @@ class AEItemKeyTest {
 
         stack.setDamageValue(1);
         assertTrue(AEItemKey.of(stack).isDamaged());
+    }
+
+    @Test
+    void testHasComponents() {
+        assertFalse(AEItemKey.of(Items.DIAMOND_PICKAXE).hasComponents());
+        assertFalse(AEItemKey.of(new ItemStack(Items.DIAMOND_PICKAXE)).hasComponents());
+
+        var undamagedPick = new ItemStack(Items.DIAMOND_PICKAXE);
+        assertFalse(AEItemKey.of(undamagedPick).hasComponents());
+
+        var namedStack = new ItemStack(Items.DIAMOND_PICKAXE);
+        namedStack.set(DataComponents.CUSTOM_NAME, Component.literal("variant"));
+        assertTrue(AEItemKey.of(namedStack).hasComponents());
+
+        namedStack.remove(DataComponents.CUSTOM_NAME);
+        assertFalse(AEItemKey.of(namedStack).hasComponents());
     }
 
     /**
