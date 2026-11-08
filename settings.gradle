@@ -19,14 +19,7 @@ dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     rulesMode = RulesMode.FAIL_ON_PROJECT_RULES
     repositories {
-        maven {
-            url = 'https://maven.shedaniel.me/'
-            content {
-                includeGroup 'me.shedaniel'
-                includeGroup 'me.shedaniel.cloth'
-                includeGroup 'dev.architectury'
-            }
-        }
+        // синк/порт 26.1.2: shedaniel/architectury maven-блок удалён — политика (AGENTS.md п.3а)
         maven {
             url = 'https://maven2.bai.lol'
             content {
@@ -46,6 +39,13 @@ dependencyResolutionManagement {
             url = 'https://www.cursemaven.com'
             content {
                 includeGroup 'curse.maven'
+            }
+        }
+        maven {
+            name = 'Modrinth'
+            url = 'https://api.modrinth.com/maven'
+            content {
+                includeGroup 'maven.modrinth'
             }
         }
         maven { // for TOP
